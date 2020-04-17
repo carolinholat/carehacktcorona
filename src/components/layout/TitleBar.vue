@@ -9,7 +9,13 @@
                     <router-link to="/" class="routerLink">Home</router-link>
                 </v-btn>
                 <v-btn text>
-                    <router-link to="/about" class="routerLink">Infos</router-link>
+                    <router-link to="/input" class="routerLink">Input</router-link>
+                </v-btn>
+                <v-btn text>
+                    <router-link to="/infos" class="routerLink">Infos</router-link>
+                </v-btn>
+                <v-btn text>
+                    <router-link to="/login" class="routerLink">Login</router-link>
                 </v-btn>
             </div>
 
