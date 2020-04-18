@@ -5,6 +5,7 @@
         <v-col cols="2" style="background-color: #e1f5fe;">
             <div class="sidebar">
                 <h3>Geschäftsbereiche</h3>
+                <v-switch v-model="nurAktive" label="Nur aktive Threads anzeigen?"></v-switch>
                 <p class="spaced">Nach Abteilung oder nach Bereich auswählen?</p>
                 <v-radio-group v-model="abteilungOderKategorie" :mandatory="true">
                     <v-radio label="Abteilung" value="abteilung"></v-radio>
@@ -22,14 +23,29 @@
                 </div>
 
 
-                <h2 align="center" class="spaced">Übersicht Info-Meldungen</h2>
+                <h2 align="center" class="spaced">Übersicht Forums-Threads</h2>
                 <p style="height: 30px"></p>
                 <div>
-                    <h4>Müssen wir Mundschutz tragen</h4>
-                    <p class=".font-italic font-weight-light">Frage am: Montag 12.04.2020</p>
-                    <p class=".font-italic font-weight-light">Antwort am: 12.04.2020</p>
-                    <v-card class="cardContent">Ja</v-card>
-                    <v-btn class="spaced">Zum Forum</v-btn>
+                    <v-data-table
+                            :headers="threadHeaders"
+                            :items="threadItems"
+                            :items-per-page="5"
+                            class="elevation-1">
+                        <template v-slot:body="{ items }">
+                            <tr v-for="item in items" :key="item.id">
+                                <td v-for="(header, index) of threadHeaders" :key="header.value + index">
+                                    <template v-if="header.value !== 'link'">
+                                        {{item[header.value]}}
+                                    </template>
+                                    <template v-else-if="header.value === 'link'">
+                                        <v-btn :href="item[header.value]" target="_blank" class="info">
+                                            WEITER
+                                        </v-btn>
+                                    </template>
+                                </td>
+                            </tr>
+                        </template>
+                    </v-data-table>
                 </div>
             </div>
         </v-col>
@@ -61,7 +77,11 @@
             return {
                 step: 1,
                 abteilungOderKategorie: 'abteilung',
-                thema: ''
+                thema: '',
+                nurAktive: false,
+                threadHeaders: [{text: 'ID', value: 'id'}, {text: 'Fragetext', value: 'text'},
+                    {text: 'Erstellt am', value: 'created'}, {text: 'Zuletzt beantwortet am', value: 'answered'}, {text: 'zum Thread', value: 'link'}],
+                threadItems: [{id: 1, text: 'Meine Frage', created: 'heute', answered: 'gestern', link: '/test'}]
             }
         }
     };

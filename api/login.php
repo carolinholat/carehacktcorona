@@ -21,25 +21,18 @@ function returnBase() {
     return $database;
 }
 
-$chosen = file_get_contents('php://input');
+$json = file_get_contents('php://input');
 
-if ($chosen === 'themenundabteilungen') {
-    $base = [];
-    $base['abteilungen'] = returnBase()->select('abteilungen', ['ID' => ['name']]);
-    $base['themen'] = returnBase()->select('themen', ['ID' => ['name']]);
+$data = json_decode($json);
 
-    echo json_encode($base);
+$mail = $data->mail;
+$pw = $data->pw;
+
+$auth = count(returnBase()->select('user', ['ID'], ["mail" => $mail, 'pw' => $pw]));
+
+if ($auth > 0) {
+    echo 'success';
 }
-
-if ($chosen === 'themenabteilungenfragen') {
-    $base = [];
-    $base['abteilungen'] = returnBase()->select('abteilungen', ['ID' => ['name']]);
-    $base['themen'] = returnBase()->select('themen', ['ID' => ['name']]);
-    $base['fragen'] = returnBase()->select('fragen', ['ID', 'frage', 'antwort']);
-
-    echo json_encode($base);
+else {
+    echo 'failure';
 }
-
-
-
-

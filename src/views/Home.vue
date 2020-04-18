@@ -1,71 +1,53 @@
 <template>
-    <div>
-        <v-card class="cardCentered align-center" style="margin-top: 50px">
-            <h2 align="center" class="spaced">Kontaktformular Coronameldung</h2>
-            <v-row>
-                <v-col cols="10" class="mx-auto">
-                    <v-select
-                            class="spaced"
-                            align="center"
-                            :items="infoOderMeldung"
-                            v-model="infoOderMeldungA"
-                            label="Brauchen Sie Informationen oder wollen Sie einen Verdacht melden"
-                            @change="setStep(1)"
-                    ></v-select>
-                    <v-select
-                            v-if="step > 1"
-                            class="spaced"
-                            multiple
-                            align="center"
-                            :items="risikogebiete"
-                            v-model="risikogebieteA"
-                            label="Waren Sie in einem dieser Risikoländer?"
-                            @change="setStep(2)"
-                    ></v-select>
-                    <v-select
-                            v-if="step > 2"
-                            class="spaced"
-                            align="center"
-                            :items="kontakt"
-                            v-model="kontaktA"
-                            label="Hatten Sie Kontakt zu einer Person, die positiv auf das Virus getestet wurde?"
-                            @change="setStep(3)"
-                    ></v-select>
-                    <v-slider
-                            v-if="step > 3 && kontaktA === 'nicht sicher'"
-                            class="spaced"
-                            v-model="wahrscheinlichkeit"
-                            :min="0"
-                            :max="100"
-                            thumb-label
-                            label="Wie hoch schätzen Sie die Wahrscheinlichkeit in % ein, dass die Person angesteckt ist?"
-                            @change="setStep(4)"
-                    ></v-slider>
-                    <v-select
-                            v-if="step > 4"
-                            class="spaced"
-                            multiple
-                            align="center"
-                            :items="symptome"
-                            v-model="symptomeA"
-                            label="Haben Sie eins oder mehrere folgender Symptome?"
-                            @change="setStep(5)"
-                    ></v-select>
-                    <v-select
-                            v-if="step > 5"
-                            class="spaced"
-                            multiple
-                            align="center"
-                            :items="fremdgefaehrdung"
-                            v-model="fremdgefaehrdungA"
-                            label="Haben Sie Kontakt mit gefährdeten Personengruppen?"
-                            @change="setStep(6)"
-                    ></v-select>
+
+
+            <v-row class="main">
+                <v-col cols="2" style="background-color: #e1f5fe;">
+                    <div class="sidebar">
+                        <h3>Geschäftsbereiche</h3>
+                        <p class="spaced">Nach Abteilung oder nach Bereich auswählen?</p>
+                        <v-radio-group v-model="abteilungOderKategorie" :mandatory="true">
+                            <v-radio label="Abteilung" value="abteilung"></v-radio>
+                            <v-radio label="Kategorie" value="kategorie"></v-radio>
+                        </v-radio-group>
+                        <v-btn color="primary" class="spaced">BLA</v-btn>
+                    </div>
+                </v-col>
+                <v-col cols="7" >
+                    <div class="sidebar">
+                        <p v-if="thema === ''"><b>Themen</b>: Alle (Filter ist oben im Menü)</p>
+                        <div v-else class="d-inline-flex">
+                            <p ><b>Thema</b>: {{thema}}</p>
+                            <v-btn color="primary" style="margin-left: 20px">Thema abonieren</v-btn>
+                        </div>
+
+
+                        <h2 align="center" class="spaced">Übersicht Info-Meldungen</h2>
+                        <p style="height: 30px"></p>
+                        <div>
+                            <h4>Müssen wir Mundschutz tragen</h4>
+                            <p class=".font-italic font-weight-light">Frage am: Montag 12.04.2020</p>
+                            <p class=".font-italic font-weight-light">Antwort am: 12.04.2020</p>
+                            <v-card class="cardContent">Ja</v-card>
+                            <v-btn class="spaced">Zum Forum</v-btn>
+                        </div>
+                    </div>
+                </v-col>
+                <v-col cols="3" >
+
+                    <v-card class="sidebar" style="min-height: 50px">
+                        <div class="cardContent">
+                            <h3>News</h3>
+                        </div>
+                    </v-card>
+                    <v-card class="sidebar" style="min-height: 50px; margin-top: 30px">
+                        <div class="cardContent">
+                            <h3>Kontakt</h3>
+                        </div>
+                    </v-card>
                 </v-col>
             </v-row>
-        </v-card>
 
-    </div>
 </template>
 
 <script>
@@ -74,69 +56,35 @@
     export default {
         components: {},
         methods: {
-            setStep(current) {
-                switch(current) {
-                    case 1:
-                        if(this.infoOderMeldungA === 'Ich brauche Informationen') {
-                            this.step = 1;
-                            this.showInfoBox = true;
-                        } else {
-                            this.step = 2;
-                            this.showInfoBox = false;
-                        }
-                        break;
-                    case 2:
-                        this.step = 3;
-                        break;
-                    case 3:
-                        if (this.kontaktA === "nicht sicher") {
-                           this.step = 4;
-                        }
-                        else this.step = 5;
-                        break;
-                    case 4:
-                        this.step = 5;
-                        break;
-                    case 5:
-                        this.step = 6;
-                        break;
-                    case 6:
-                        break;
-                }
-            }
         },
         data() {
             return {
                 step: 1,
-                infoOderMeldung: ['Ich brauche Informationen', 'Ich will einen Verdacht melden'],
-                infoOderMeldungA: '',
-                showInfoBox: false,
-                risikogebiete: ['Italien', 'Frankreich', 'China', 'Iran'],
-                risikogebieteA: [],
-                kontakt: ['ja', 'nein', 'nicht sicher'],
-                kontaktA: '',
-                wahrscheinlichkeit: 0,
-                symptome: ['Fieber', 'trockener Husten', 'Atembeschwerden', 'Abgeschlagenheit'],
-                symptomeA: [],
-                eigenesRisiko: ['Über 60 Jahre alt', 'chronische Atemwegserkrankung (Asthma, COPD', 'andere chronische Erkrankung'],
-                eigenesRisikoA: [],
-                fremdgefaehrdung: ['Ich pflege Angehörige', 'Ich habe kleine Kinder', 'Ich arbeite im Gesundheitswesen/ Pflege/ Betreuung'],
-                fremdgefaehrdungA: []
+                abteilungOderKategorie: 'abteilung',
+                thema: ''
             }
         }
     };
 </script>
 
 <style>
-    .cardCentered {
-        width: 80%;
-        margin: auto;
-        min-height: 400px
+    .main {
+        height: 100%;
     }
 
+    .sidebar {
+        margin-left: 50px;
+        margin-top: 20px;
+        margin-right: 50px;
+    }
+
+    .cardContent {
+        padding: 20px
+    }
+
+
     .spaced {
-        padding-top: 10px;
-        padding-bottom: 15px
+        margin: 10px 0;
     }
 
 </style>

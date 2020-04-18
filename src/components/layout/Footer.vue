@@ -1,5 +1,5 @@
 <template>
-    <v-footer padless style="background: cadetblue" absolute="absolute">
+    <v-footer padless style="background: #342484" absolute="absolute">
         <v-col
                 class="text-center"
                 cols="12"
@@ -25,7 +25,7 @@
 
     .routerLink:hover {
         text-decoration: none;
-        color: darkslategrey;
+        color: yellow;
     }
 
 </style>

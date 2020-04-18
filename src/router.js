@@ -4,6 +4,10 @@ import Home from './views/Home.vue'
 import Input from './views/Input.vue'
 import Infos from './views/Infos.vue'
 import Login from './views/Login.vue'
+import Forum from './views/Forum.vue'
+import Profil from './views/Profil.vue'
+import Thread from './views/Thread.vue'
+
 
 
 Vue.use(Router)
@@ -29,6 +33,21 @@ export default new Router({
       path: '/login',
       name: 'login',
       component: Login
+    },
+    {
+      path: '/forum',
+      name: 'forum',
+      component: Forum
+    },
+    {
+      path: '/profil',
+      name: 'profil',
+      component: Profil
+    },
+    {
+      path: '/thread',
+      name: 'thread',
+      component: Thread
     },
     {
       path: '/about',
