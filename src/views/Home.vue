@@ -24,22 +24,19 @@
 
                         <h2 align="center" class="spaced">Übersicht Info-Meldungen</h2>
                         <p style="height: 30px"></p>
-                        <div>
-                            <h4>Müssen wir Mundschutz tragen</h4>
-                            <p class=".font-italic font-weight-light">Frage am: Montag 12.04.2020</p>
-                            <p class=".font-italic font-weight-light">Antwort am: 12.04.2020</p>
-                            <v-card class="cardContent">Ja</v-card>
-                            <v-btn class="spaced">Zum Forum</v-btn>
+                        <div v-for="frage in fragenArray" :key="frage.ID">
+                            <h4>{{frage.frage}}</h4>
+                            <p class=".font-italic font-weight-light">Frage am: {{frage.zeitpunkt_erstellung}}</p>
+                            <v-card class="cardContent">{{frage.antwort}}</v-card>
+                            <p class=".font-italic font-weight-light text-right">Antwort am: {{frage.zeitpunkt_antwort}}</p>
+                            <p style="height: 20px"></p>
+                            <v-btn class="spaced" v-if="frage.forum_thread !== null">Zum Forum</v-btn>
+                            <v-btn class="spaced" v-else>Forum Thread eröffnen</v-btn>
                         </div>
                     </div>
                 </v-col>
                 <v-col cols="3" >
-
-                    <v-card class="sidebar" style="min-height: 50px">
-                        <div class="cardContent">
-                            <h3>News</h3>
-                        </div>
-                    </v-card>
+                    <NewsTicker :fragen="fragenArray"/>
                     <v-card class="sidebar" style="min-height: 50px; margin-top: 30px">
                         <div class="cardContent">
                             <h3>Kontakt</h3>
@@ -52,16 +49,46 @@
 
 <script>
     import axios from "../plugins/axios";
+    import NewsTicker from './../components/Utils/NewsTicker';
 
     export default {
-        components: {},
+        components: {
+            NewsTicker
+        },
+        mounted() {
+            let self = this;
+            axios
+                .get('http://localhost:8000/api/filter_fragen.php')
+                .then(response => self.initFrageFilter(response.data));
+
+            axios
+                .post('http://localhost:8000/api/init.php', 'themenundabteilungen')
+                .then(response => self.initThemenUndAbteilungen(response.data));
+        },
         methods: {
+            initFrageFilter(responseData) {
+                this.fragenArray = responseData.fragen;
+                this.frageVonAbteilung = responseData.frage_von_abteilung;
+                this.frageVonKategorie = responseData.frage_von_kategorie;
+                this.frageVonThema = responseData.frage_von_thema;
+            },
+            initThemenUndAbteilungen(data) {
+                this.themenListe = data.themen;
+                this.abteilungenListe = data.abteilungen;
+                this.kategorienListe = data.kategorien;
+            },
         },
         data() {
             return {
-                step: 1,
                 abteilungOderKategorie: 'abteilung',
-                thema: ''
+                thema: '',
+                fragenArray: [{ID: 1, frage: 'Müssen wir Mundschutz tragen?', antwort: 'ja', zeitpunkt_erstellung: '2020-04-22 10:08:04', zeitpunkt_antwort: '2020-04-22 10:08:04', forum_thread: null}],
+                frageVonKategorie: [],
+                frageVonAbteilung: [],
+                frageVonThema: [],
+                themenListe: [],
+                abteilungenListe: [],
+                kategorienListe: []
             }
         }
     };

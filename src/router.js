@@ -7,7 +7,7 @@ import Login from './views/Login.vue'
 import Forum from './views/Forum.vue'
 import Profil from './views/Profil.vue'
 import Thread from './views/Thread.vue'
-
+import Feedback from "./views/Feedback";
 
 
 Vue.use(Router)
@@ -17,7 +17,7 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      component: Home
+      component: Infos
     },
     {
       path: '/input',
@@ -48,6 +48,11 @@ export default new Router({
       path: '/thread',
       name: 'thread',
       component: Thread
+    },
+    {
+      path: '/feedback',
+      name: 'feedback',
+      component: Feedback
     },
     {
       path: '/about',

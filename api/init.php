@@ -27,11 +27,13 @@ if ($chosen === 'themenundabteilungen') {
     $base = [];
     $base['abteilungen'] = returnBase()->select('abteilungen', ['ID' => ['name']]);
     $base['themen'] = returnBase()->select('themen', ['ID' => ['name']]);
+    $base['kategorien'] = returnBase()->select('kategorie', ['ID' => ['name']]);
+    $base['kategorie_hat_abteilung'] = returnBase()->select('kategorie_hat_abteilung', ['kategorie_id', 'abteilung_id']);
 
     echo json_encode($base);
 }
 
-if ($chosen === 'themenabteilungenfragen') {
+else if ($chosen === 'themenabteilungenfragen') {
     $base = [];
     $base['abteilungen'] = returnBase()->select('abteilungen', ['ID' => ['name']]);
     $base['themen'] = returnBase()->select('themen', ['ID' => ['name']]);

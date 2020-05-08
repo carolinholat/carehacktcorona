@@ -31,12 +31,12 @@
             </v-toolbar-title>
 
             <v-spacer></v-spacer>
-            <v-btn icon style="margin-right: 70px">
+            <v-btn icon style="margin-right: 70px" v-if="$store.state.admin">
                 <v-btn text>
                     <router-link to="/input" class="routerLink">DASHBOARD</router-link>
                 </v-btn>
             </v-btn>
-            <v-btn icon style="margin-right: 50px">
+            <v-btn icon style="margin-right: 50px" v-if="$store.state.token !== ''">
                 <v-btn text>
                     <router-link to="/profil" class="routerLink">MEIN PROFIL</router-link>
                 </v-btn>
@@ -44,13 +44,20 @@
 
             <v-btn icon style="margin-right: 50px">
                 <v-btn text>
-                    <router-link to="/login" class="routerLink">Login</router-link>
+                    <router-link to="/login" class="routerLink">{{$store.state.token === '' ? 'LOGIN' : 'LOGOUT'}}</router-link>
+                </v-btn>
+            </v-btn>
+
+            <v-btn icon style="margin-right: 50px">
+                <v-btn text>
+                    <router-link to="/feedback" class="routerLink">FEEDBACK</router-link>
                 </v-btn>
             </v-btn>
 
         </v-toolbar>
         <v-toolbar style="background: whitesmoke">
             <v-menu offset-y>
+                <!--
                 <template v-slot:activator="{ on }" >
                     <v-btn style="margin-left: 40px"
                             color="primary"
@@ -59,7 +66,7 @@
                     >
                         Themen
                     </v-btn>
-                </template>
+                </template> -->
                 <v-list>
                     <v-list-item
                             v-for="item in ['bli', 'bla']"

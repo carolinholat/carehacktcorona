@@ -7,16 +7,45 @@ namespace Composer\Autoload;
 class ComposerStaticInit3509cfd3cbd6f4e2fb34aaa1c3e745fb
 {
     public static $prefixLengthsPsr4 = array (
+        'P' => 
+        array (
+            'PhpKit\\ExtPDO\\' => 14,
+            'PHPMailer\\PHPMailer\\' => 20,
+        ),
         'M' => 
         array (
             'Medoo\\' => 6,
         ),
+        'L' => 
+        array (
+            'Lcobucci\\JWT\\' => 13,
+        ),
+        'F' => 
+        array (
+            'Firebase\\JWT\\' => 13,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
+        'PhpKit\\ExtPDO\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/php-kit/ext-pdo/src',
+        ),
+        'PHPMailer\\PHPMailer\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpmailer/phpmailer/src',
+        ),
         'Medoo\\' => 
         array (
             0 => __DIR__ . '/..' . '/catfan/medoo/src',
+        ),
+        'Lcobucci\\JWT\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/lcobucci/jwt/src',
+        ),
+        'Firebase\\JWT\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
         ),
     );
 

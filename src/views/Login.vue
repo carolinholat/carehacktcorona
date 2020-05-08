@@ -19,6 +19,7 @@
                         placeholder="demo"
                         v-model="pw"
                 ></v-text-field>
+                <p class="warning" v-if="unauthorized">Die Daten sind falsch</p>
             </v-card-text>
 
             <v-divider></v-divider>
@@ -49,14 +50,38 @@
                 postObj.mail = this.mail;
                 postObj.pw = this.pw;
                 let self = this;
-                axios.post('http://localhost:8000/carehacktcorona/api/login.php', postObj)
-                    .then(response => console.log(response.data));
+                axios.post('http://localhost:8000/api/login.php', postObj)
+                    .then(response => self.setToken(response.data));
+            },
+            setToken(responseData) {
+                if (responseData.token !== '405') {
+
+                    this.$store.commit('setToken', responseData.token);
+                    this.$store.commit('setAbo', responseData.abo);
+                    this.$store.commit('setAboFix', responseData.abo_pflicht);
+                    this.$store.commit('setAboFlex', responseData.abo_flex);
+                    this.$store.commit('setAbteilung', responseData.abteilung);
+                    this.$store.commit('setKategorien', responseData.kategorien);
+
+                    if (this.$store.state.token !== "") {
+                        this.$router.push({ path: '/infos' });
+                    }
+                    console.log(responseData)
+                    if (responseData.role === 'admin') {
+                        this.$store.commit('setAdmin');
+                    }
+                }
+                else {
+                    this.unauthorized = true;
+                }
             }
+
         },
         data() {
             return {
                 mail: '',
-                pw: ''
+                pw: '',
+                unauthorized: false
             }
         }
     };

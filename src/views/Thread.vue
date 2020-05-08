@@ -1,18 +1,31 @@
 <template>
     <div>
         <v-card class="cardCentered align-center" style="margin-top: 50px">
-            <v-btn color="primary" style="margin: 20px">ZUR FORUMSÜBERSICHT</v-btn>
-            <h2 align="center" class="spaced">{{title}}</h2>
-            <v-row>
+            <v-btn class="primary" style="margin: 20px">
+                <router-link to="/forum" class="routerLink">ZUR FORUMSÜBERSICHT</router-link>
+            </v-btn>
+
+            <div class="text-center spaced" v-if="loading">
+                <v-progress-circular
+                        indeterminate
+                        color="primary"
+                ></v-progress-circular>
+            </div>
+
+            <h2 align="center" class="spaced" v-if="!loading">{{frage.frage}}</h2>
+            <v-row v-if="!loading">
                 <v-col cols="10" class="mx-auto">
-                    <p>Erstellt: {{erstellt}}</p>
-                    <div style="margin-top: 30px">
-                        <p>Erika schrieb am 1.1.2020:</p>
-                        <v-card>
-                            <p style="padding: 20px">Ich bin mir unsicher, was alles wie desinfiziert werden muss. Bitte um genauere Erläuterung!</p>
-                        </v-card>
+                    <p>Erstellt: {{frage.zeitpunkt_erstellung}}</p>
+                    <div style="margin-top: 30px" v-if="thread.length > 0">
+                        <div v-for="beitrag in thread" :key="beitrag.zeitstempel">
+                            <p>{{beitrag.vorname}} {{beitrag.name}} schrieb am {{beitrag.zeitstempel}}:</p>
+                            <v-card>
+                                <p style="padding: 20px">{{beitrag.text}}</p>
+                            </v-card>
+                        </div>
                     </div>
-                    <div v-if="!archiv">
+                    <div v-else>Keine Beiträge in diesem Thread</div>
+                    <div v-if="!archiv && $store.state.token !== ''">
                         <p>
                             Ihre Antwort:
                         </p>
@@ -25,15 +38,22 @@
                                 ></v-text-field>
                             </p>
                         </v-card>
-                        <v-btn>SENDEN</v-btn>
+                        <v-btn v-if="$store.state.token !== ''"
+                                @click="saveBeitrag()">SENDEN</v-btn>
+                        <WarningOverlay
+                                v-if="overlay"
+                                @weiter="overlay = false"
+                                :msg="'Der Text darf nicht leer sein. Klicken Sie, um dieses Fenster zu schließen'"/>
                     </div>
 
                     <v-btn
-                            v-if="!archiv"
-                            @click="close()" style="margin-top: 30px">THREAD BEENDEN</v-btn>
+                            v-if="!archiv && $store.state.token !== ''"
+                            @click="close()" style="margin-top: 30px">THREAD BEENDEN
+                    </v-btn>
                     <v-btn
-                            v-if="archiv"
-                            @click="open()" style="margin-top: 30px">THREAD WIEDER ÖFFNEN</v-btn>
+                            v-if="archiv && $store.state.token !== ''"
+                            @click="open()" style="margin-top: 30px">THREAD WIEDER ÖFFNEN
+                    </v-btn>
 
 
                 </v-col>
@@ -45,21 +65,60 @@
 
 <script>
     import axios from "../plugins/axios";
+    import WarningOverlay from "../../src/components/layout/WarningOverlay"
+
 
     export default {
-        components: {},
+        components: {
+            WarningOverlay
+        },
         data() {
             return {
                 title: 'Forumsfragetitel',
                 erstellt: 'Montag',
                 archiv: false,
-                antwortText: ''
+                antwortText: '',
+                loading: true,
+                threadId: 0,
+                frage: null,
+                thread: null,
+                overlay: false
             }
         },
         mounted() {
+            if(this.$route.query.id) {
+                this.threadId = parseInt(this.$route.query.id);
+            }
+            let postObj = {};
+            postObj.token = this.$store.state.token;
+            postObj.id = this.threadId;
+            let self = this;
+            axios
+                .post('http://localhost:8000/api/thread_items.php', postObj)
+                .then(response => self.initThread(response.data));
         },
         methods: {
-
+            initThread(data) {
+                this.frage = data.frage[0];
+                this.thread = data.beitraege;
+                this.loading = false;
+            },
+            saveBeitrag(){
+                let postObj = {};
+                postObj.action = 'insertThreadBeitrag';
+                postObj.thread_ID = this.threadId;
+                postObj.text = this.antwortText;
+                postObj.token = this.$store.state.token;
+                if (this.antwortText === '') {
+                   this.overlay = true;
+                }
+                else {
+                    let self = this;
+                    axios
+                        .post('http://localhost:8000/api/new_items.php', postObj)
+                        .then(response => self.antwortText = '');
+                }
+            }
         },
     };
 </script>
@@ -74,6 +133,16 @@
     .spaced {
         padding-top: 10px;
         padding-bottom: 15px
+    }
+
+    .routerLink {
+        text-decoration: none;
+        color: whitesmoke;
+    }
+
+    .routerLink:hover {
+        text-decoration: none;
+        color: yellow;
     }
 
 </style>

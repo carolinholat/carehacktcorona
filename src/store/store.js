@@ -5,26 +5,36 @@ import Vuex from 'vuex'
 Vue.use(Vuex)
 
 export default new Vuex.Store({
- // modules: {
-  //  todos
- // },
   state: {
-    counter: 0,
-    name: 'Carolin'
-  },
-  getters: {
-    extendName: function(state) {
-      let name= state.name;
-      return name + ' some appended text';
-    },
-    counterAdd5: function(state) {
-      return state.counter + 5;
-    }
+    token: '',
+    admin: false,
+    abteilung: 0,
+    abo: [],
+    aboFix: [],
+    aboFlex: [],
+    kategorien: []
   },
   mutations: {
-
+    setToken: function(state, payload) {
+      state.token = payload;
+    },
+    setAdmin: function(state) {
+      state.admin = true;
+    },
+    setAbo: function(state, payload) {
+      state.abo = payload;
+    },
+    setAboFix: function(state, payload) {
+      state.aboFix = payload;
+    },
+    setAboFlex: function(state, payload) {
+      state.aboFlex = payload;
+    },
+    setAbteilung: function(state, payload) {
+      state.abteilung = payload;
+    },
+    setKategorien: function(state, payload) {
+      state.kategorien = payload;
+    }
   },
-  actions: {
-
-  }
 })

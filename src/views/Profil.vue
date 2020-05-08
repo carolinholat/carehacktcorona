@@ -1,42 +1,80 @@
 <template>
     <div>
         <v-card class="cardCentered align-center" style="margin-top: 50px">
+            <v-btn class="primary" style="margin: 20px" @click="aboverwaltung = !aboverwaltung">
+                {{aboverwaltung ? 'ZURÜCK ZU PROFIL' : 'THEMENABOS VERWALTEN'}}
+            </v-btn>
             <h2 align="center" class="spaced">Mein Profil</h2>
             <v-row>
-                <v-col cols="10" class="mx-auto">
-                        <v-text-field
-                                label="Vorname"
-                                placeholder="Erika"
-                                v-model="vorname"
-                        ></v-text-field>
+                <v-col cols="10" class="mx-auto" v-if="!aboverwaltung">
+                    <v-text-field
+                            label="Vorname"
+                            placeholder="Erika"
+                            v-model="personVorname"
+                    ></v-text-field>
                     <v-text-field
                             label="Nachname"
                             placeholder="Mustermann"
-                            v-model="nachname"
+                            v-model="personName"
                     ></v-text-field>
                     <v-text-field
                             label="Mail"
                             placeholder="erika@pro-juventa.de"
-                            v-model="mail"
+                            v-model="personMail"
                     ></v-text-field>
                     <v-text-field
-                            label="Mail"
-                            placeholder="erika@pro-juventa.de"
-                            v-model="mail"
+                            label="Mail privat"
+                            placeholder="erika@web.de"
+                            v-model="personPrivatMail"
                     ></v-text-field>
                     <v-text-field
                             label="Handynr"
                             placeholder="01761111111"
-                            v-model="handy"
+                            v-model="personHandy"
                     ></v-text-field>
-                    <v-text-field
-                            label="Passwort"
-                            placeholder="01761111111"
-                            v-model="handy"
-                    ></v-text-field>
+
 
                     <v-btn @click="save()">SPEICHERN</v-btn>
-
+                </v-col>
+                <v-col cols="10" class="mx-auto" v-else>
+                    <div class="text-center spaced" v-if="loading">
+                        <v-progress-circular
+                                indeterminate
+                                color="primary"
+                        ></v-progress-circular>
+                    </div>
+                    <div v-if="!loading">
+                        <h3 class="spaced">Abonnierte Themen</h3>
+                        <h4 class="spaced">Über Abteilung abonniert</h4>
+                        <div v-if="themenFix.length > 0" class="d-flex">
+                            <v-btn class="primary" v-for="thema in themenFix" :key="thema.id">{{thema.name}}</v-btn>
+                        </div>
+                        <h6 v-else class="spaced">Keine Themen vorhanden</h6>
+                        <h4 class="spaced">Zusätzlich abonniert</h4>
+                        <div v-if="themenAbonniert.length > 0" class="d-flex">
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on }">
+                                    <v-btn class="primary" v-for="thema in themenAbonniert" :key="thema.id" v-on="on">
+                                        {{thema.name}}
+                                    </v-btn>
+                                </template>
+                                <span>Nicht mehr abonnieren</span>
+                            </v-tooltip>
+                        </div>
+                        <h6 v-else class="spaced">Keine Themen vorhanden</h6>
+                        <h4 class="spaced">Weitere Themen</h4>
+                        <div v-if="themenNichtAbonniert.length > 0" class="d-flex">
+                            <v-tooltip bottom>
+                                <template v-slot:activator="{ on }">
+                                    <v-btn class="primary" v-for="thema in themenNichtAbonniert" :key="thema.id"  v-on="on">
+                                        {{thema.name}}
+                                    </v-btn>
+                                </template>
+                                <span>Abonnieren</span>
+                            </v-tooltip>
+                        </div>
+                        <h6 v-else class="spaced">Keine Themen vorhanden</h6>
+                    </div>
                 </v-col>
             </v-row>
         </v-card>
@@ -51,51 +89,92 @@
         components: {},
         data() {
             return {
+                loading: false,
+                aboverwaltung: false,
                 itemKategorie: ['Frage', 'Abteilung', 'Person', 'Thema'],
                 chosenItemKategorie: '',
                 frageText: '',
                 antwortText: '',
                 abteilung: '',
                 thema: '',
+                personVorname: '',
                 personName: '',
                 personAbteilung: '',
                 personMail: '',
+                personPrivatMail: '',
+                personHandy: '',
                 tagThemenList: [],
+                themenFix: [],
+                themenAbonniert: [],
+                themenNichtAbonniert: [],
                 tagAbteilungenList: []
             }
         },
         mounted() {
             let self = this;
             axios
-                .post('http://localhost:8000/carehacktcorona/api/init.php', 'themenundabteilungen')
+                .post('http://localhost:8000/api/init.php', 'themenundabteilungen')
                 .then(response => self.initThemenUndAbteilungen(response.data));
+
+            let postObj = {};
+            postObj.action = 'getProfil';
+            postObj.token = this.$store.state.token;
+
+            axios
+                .post('http://localhost:8000/api/profil.php', postObj)
+                .then(response => self.initProfil(response.data));
         },
         methods: {
+            initProfil(data) {
+                this.personVorname = data.user.vorname;
+                this.personName = data.user.name;
+                this.personMail = data.user.mail;
+                this.personPrivatMail = data.user.mail_privat;
+                this.personHandy = data.user.handy;
+            },
             initThemenUndAbteilungen(data) {
                 this.tagThemenList = data.themen;
                 this.tagAbteilungenList = data.abteilungen;
+                this.orderThemen();
+            },
+            orderThemen() {
+                for(let id of Object.keys(this.tagThemenList)) {
+                    let thema = {};
+                    thema.id = id;
+                    thema.name = this.tagThemenList[id].name;
+                    if(this.$store.state.aboFix.includes(id)) {
+                        this.themenFix.push(thema);
+                    } else if(this.$store.state.aboFlex.includes(id)) {
+                        this.themenAbonniert.push(thema);
+                    } else {
+                        this.themenNichtAbonniert.push(thema);
+                    }
+                }
+            },
+            abonnieren() {
+
+            },
+            desabonnieren() {
+
             },
             save() {
                 let postObj = {};
                 postObj.typ = this.chosenItemKategorie.toLowerCase();
-                if (this.chosenItemKategorie === 'Frage') {
+                if(this.chosenItemKategorie === 'Frage') {
                     postObj.frage = this.frageText;
                     postObj.antwort = this.antwortText;
-                }
-                else if (this.chosenItemKategorie === 'Abteilung'){
+                } else if(this.chosenItemKategorie === 'Abteilung') {
                     postObj.abteilung = this.abteilung;
-                }
-                else if (this.chosenItemKategorie === 'Thema'){
+                } else if(this.chosenItemKategorie === 'Thema') {
                     postObj.thema = this.thema;
-                }
-                else {
+                } else {
                     postObj.name = this.personName;
                     postObj.mail = this.personMail;
                     postObj.abteilung = this.personAbteilung;
                 }
                 this.chosenItemKategorie = '';
                 this.frageText = '';
-                this.antwortText='';
+                this.antwortText = '';
                 this.abteilung = '';
                 this.thema = '';
                 this.personName = '';

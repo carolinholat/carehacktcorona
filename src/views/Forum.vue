@@ -28,18 +28,18 @@
                 <div>
                     <v-data-table
                             :headers="threadHeaders"
-                            :items="threadItems"
+                            :items="nurAktive ? threadItemsActive : threadItems"
                             :items-per-page="5"
                             class="elevation-1">
                         <template v-slot:body="{ items }">
                             <tr v-for="item in items" :key="item.id">
                                 <td v-for="(header, index) of threadHeaders" :key="header.value + index">
-                                    <template v-if="header.value !== 'link'">
+                                    <template v-if="header.value !== 'forum_thread'">
                                         {{item[header.value]}}
                                     </template>
-                                    <template v-else-if="header.value === 'link'">
-                                        <v-btn :href="item[header.value]" target="_blank" class="info">
-                                            WEITER
+                                    <template v-else-if="header.value === 'forum_thread'">
+                                        <v-btn text :href="item[header.value]" target="_blank" class="info">
+                                            <router-link :to="'/thread?id=' + item.forum_thread" class="routerLink">WEITER</router-link>
                                         </v-btn>
                                     </template>
                                 </td>
@@ -72,6 +72,20 @@
     export default {
         components: {},
         methods: {
+            initForum(data) {
+                console.log(data)
+                let aktiv = data.forum_aktiv;
+                this.threadItemsActive = aktiv;
+                let alle = data.forum_alle;
+                this.threadItems = alle;
+            }
+        },
+        mounted() {
+            let self = this;
+            axios
+                .post('http://localhost:8000/api/filter_forum.php', this.$store.state.token)
+                .then(response => self.initForum(response.data));
+
         },
         data() {
             return {
@@ -79,9 +93,10 @@
                 abteilungOderKategorie: 'abteilung',
                 thema: '',
                 nurAktive: false,
-                threadHeaders: [{text: 'ID', value: 'id'}, {text: 'Fragetext', value: 'text'},
-                    {text: 'Erstellt am', value: 'created'}, {text: 'Zuletzt beantwortet am', value: 'answered'}, {text: 'zum Thread', value: 'link'}],
-                threadItems: [{id: 1, text: 'Meine Frage', created: 'heute', answered: 'gestern', link: '/test'}]
+                threadHeaders: [{text: 'Fragetext', value: 'frage'},
+                    {text: 'Erstellt am', value: 'zeitpunkt_erstellung'}, {text: 'Zuletzt beantwortet am', value: 'zeitstempel'}, {text: 'zum Thread', value: 'forum_thread'}],
+                threadItems: [{id: 'Meine Frage', text: 'Meine Frage', zeitpunkt_erstellung: 'gestern', zeitstempel: 'heute', forum_thread: 'test'}],
+                threadItemsActive : [{id: 'Meine Frage', text: 'Meine Frage', zeitpunkt_erstellung: 'gestern', zeitstempel: 'heute', forum_thread: 'test'}]
             }
         }
     };
@@ -105,6 +120,16 @@
 
     .spaced {
         margin: 10px 0;
+    }
+
+    .routerLink {
+        text-decoration: none;
+        color: whitesmoke;
+    }
+
+    .routerLink:hover {
+        text-decoration: none;
+        color: yellow;
     }
 
 </style>
