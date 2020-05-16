@@ -38,7 +38,8 @@
             return {
                 thema: '',
                 themaAbteilungen: [],
-                overlay: false
+                overlay: false,
+                showList: false
             }
         },
         methods: {

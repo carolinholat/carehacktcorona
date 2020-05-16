@@ -29,7 +29,13 @@
             <v-btn class="spaced" @click="saveUser()">SPEICHERN</v-btn>
         </div>
         <v-btn class="spaced" @click="showList = ! showList">Mitarbeiter*innenverzeichnis anzeigen</v-btn>
-        <v-text-field
+        <ItemDatatable
+                v-if="showList"
+                :headers="headers"
+                :itemArray="userArray"
+                @showUpdateItem="showUpdateUser($event)"
+        />
+        <!--<v-text-field
                 v-if="showList"
                 v-model="search"
                 append-icon="mdi-magnify"
@@ -57,7 +63,8 @@
                     </td>
                 </tr>
             </template>
-        </v-data-table>
+        </v-data-table> -->
+
         <WarningOverlay
                 v-if="overlay"
                 @weiter="overlay = false"
@@ -68,6 +75,7 @@
 <script>
     import axios from "../../../plugins/axios";
     import WarningOverlay from "../../layout/WarningOverlay"
+    import ItemDatatable from '../ItemDatatable';
 
     export default {
         name: "Mitarbeiter",
@@ -78,7 +86,8 @@
             abteilungenListe: Array
         },
         components: {
-            WarningOverlay
+            WarningOverlay,
+            ItemDatatable
         },
         methods: {
             showUpdateUser(id) {
@@ -156,7 +165,7 @@
             userArray: function() {
                 let userArray = [];
                 for(let user of this.user) {
-                    let abteilung = user.abteilung_id;
+                    let abteilung = parseInt(user.abteilung_id);
                     let userAbteilung = this.abteilungen[abteilung].name;
                     user.abteilung = userAbteilung;
                     userArray.push(user);

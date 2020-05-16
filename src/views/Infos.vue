@@ -11,7 +11,8 @@
                         @change="modifyFilterPersonalisiert()"
                         v-model="filterPersonalisiert" label="Personalisierten Filter anwenden"></v-switch>
 
-                <v-switch v-model="filterAbteilungen" label="Nach Abteilung filtern?"></v-switch>
+                <v-switch v-model="filterAbteilungen" label="Nach Abteilung filtern?"
+                          @change="closeFilter('abteilungen')"></v-switch>
                 <div v-if="filterAbteilungen">
                     <v-checkbox v-for="abteilung in abteilungenListe"
                                 :key="abteilung.value" :label="abteilung.text"
@@ -21,7 +22,8 @@
 
                 </div>
 
-                <v-switch v-model="filterBereiche" label="Nach Bereich filtern?"></v-switch>
+                <v-switch v-model="filterBereiche" label="Nach Bereich filtern?"
+                          @change="closeFilter('kategorien')"></v-switch>
                 <div v-if="filterBereiche">
                     <v-checkbox v-for="bereich in kategorienListe"
                                 :key="bereich.value" :label="bereich.text"
@@ -30,7 +32,8 @@
                                 @change="filteredFragen()"></v-checkbox>
                 </div>
 
-                <v-switch v-model="filterThemen" label="Nach Themen filtern?"></v-switch>
+                <v-switch v-model="filterThemen" label="Nach Themen filtern?"
+                          @change="closeFilter('themen')"></v-switch>
                 <div v-if="filterThemen">
                     <v-checkbox v-for="thema in themenListe"
                                 :value="thema.value"
@@ -187,18 +190,9 @@
                 this.fragenResFilter = array;
             },
             modifyFilterPersonalisiert() {
-                if(!this.filterPersonalisiert) {
-                    // alle auf true setzen
-                    this.filterThemenListe = this.themenListe;
-                    this.filterAbteilungenListe = this.abteilungenListe;
-                    this.filterKategorienListe = this.kategorienListe;
-                    // alle suchfelder schließen
-                    this.filterBereiche = false;
-                    this.filterThemen = false;
-                    this.filterAbteilungen = false;
-                } else {
+                if(this.filterPersonalisiert) {
                     // filter setzen
-                    this.filterAbteilungenListe = [this.$store.state.abteilung];
+                    this.filterAbteilungenListe = [parseInt(this.$store.state.abteilung)];
                     this.filterThemenListe = this.$store.state.abo;
                     this.filterKategorienListe = this.$store.state.kategorien;
 
@@ -208,13 +202,37 @@
                     this.filterAbteilungen = true;
                 }
                 this.filteredFragen();
-            }
+            },
+            closeFilter(art) {
+                let result = [];
+                switch(art) {
+                    case 'abteilungen':
+                        for (let abteilung of this.abteilungenListe) {
+                            result.push(abteilung.value);
+                        }
+                        this.filterAbteilungenListe = result;
+                        break;
+                    case 'kategorien':
+                        for (let kategorie of this.kategorienListe) {
+                            result.push(kategorie.value);
+                        }
+                        this.filterKategorienListe = result;
+                        break;
+                    case 'themen':
+                        for (let thema of this.themenListe) {
+                            result.push(thema.value);
+                        }
+                        this.filterThemenListe = result;
+                        break;
+                }
+                this.filteredFragen();
+            },
 
         },
         computed: {},
         data() {
             return {
-                filterPersonalisiert: true,
+                filterPersonalisiert: false,
                 step: 1,
                 abteilungOderKategorie: 'abteilung',
                 thema: '',

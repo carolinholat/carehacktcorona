@@ -10,6 +10,29 @@
                 placeholder="Ihr Antworttext"
                 v-model="antwortText"
         ></v-text-field>
+        <div class="d-inline-flex">
+            <v-checkbox
+                    v-model="ampel"
+                    label="Als Push-Notification senden"
+                    color="red"
+                    value="rot"
+                    hide-details
+            ></v-checkbox>
+            <v-checkbox
+                    v-model="ampel"
+                    label="Als Email senden"
+                    color="yellow"
+                    value="gelb"
+                    hide-details
+            ></v-checkbox>
+            <v-checkbox
+                    v-model="ampel"
+                    label="Nur zuweisen"
+                    color="green"
+                    value="gruen"
+                    hide-details
+            ></v-checkbox>
+        </div>
         <v-select
                 class="spaced"
                 label="Frage einer oder mehreren Abteilungen zuweisen"
@@ -44,12 +67,14 @@
                 v-model="kategorieFreigeben">
         </v-select>
         <v-switch class="spaced" v-model="frageOeffentlich" label="Öffentlich sichtbar?"></v-switch>
+
         <v-btn @click="saveFAQ()">SPEICHERN</v-btn>
         <WarningOverlay
                 v-if="overlay"
                 @weiter="overlay = false"
                 :msg="'Es fehlen noch Angaben. Klicken Sie, um dieses Fenster zu schließen'"/>
        <!-- <WarningDelete/> -->
+
     </div>
 
 </template>
@@ -81,7 +106,8 @@
                 frageOeffentlich: false,
                 abteilungFreigeben: null,
                 kategorieFreigeben: null,
-                overlay: false
+                overlay: false,
+                ampel: ''
             }
         },
         methods: {

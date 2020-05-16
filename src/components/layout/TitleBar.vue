@@ -1,7 +1,7 @@
 <template>
     <div>
-        <v-toolbar style="background: #342484">
-
+        <v-toolbar style="background: #87CEEB  ; height: 100px">
+            <!--#ADD8E6  #1E90FF-->
             <!--<div class="flex-grow-1"></div>
 
             <div>
@@ -22,11 +22,11 @@
             </div> -->
             <v-btn icon style="margin-left: 50px">
                 <router-link to="/" class="routerLink">
-                <img src="../../../public/Scio2.png" style="height: 50px; width: 70px"/>
+                <img src="../../../public/LogoSCIO_care.png" style="height: 100px; width: 120px; margin-top: 10px; padding-top: 20px"/>
                 </router-link>
             </v-btn>
 
-            <v-toolbar-title style="margin-left: 50px; color: whitesmoke">
+            <v-toolbar-title style="margin-left: 50px; color: black" justify="center">
                 Pro-Juventa Kommunikation
             </v-toolbar-title>
 
@@ -42,7 +42,7 @@
                 </v-btn>
             </v-btn>
 
-            <v-btn icon style="margin-right: 50px">
+            <v-btn icon style="margin-right: 50px" justify="center">
                 <v-btn text>
                     <router-link to="/login" class="routerLink">{{$store.state.token === '' ? 'LOGIN' : 'LOGOUT'}}</router-link>
                 </v-btn>
@@ -116,12 +116,14 @@
 <style scoped>
     .routerLink {
         text-decoration: none;
-        color: whitesmoke;
+        color: black;
+        /*color: whitesmoke; */
     }
 
     .routerLink:hover {
         text-decoration: none;
-        color: yellow;
+       /* color: yellow; */
+        color: #0d47a1;
     }
 
 </style>

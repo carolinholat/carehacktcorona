@@ -1,5 +1,6 @@
 <template>
-    <v-footer padless style="background: #342484" absolute="absolute">
+    <v-footer padless style="background:  #87CEEB" absolute="absolute">
+        <!--pro juventa: #342484 -->
         <v-col
                 class="text-center"
                 cols="12"
@@ -20,12 +21,13 @@
 <style scoped>
     .routerLink {
         text-decoration: none;
-        color: whitesmoke;
+        color: black;
     }
 
     .routerLink:hover {
         text-decoration: none;
-        color: yellow;
+       /* color: yellow; */
+        color: #0d47a1;
     }
 
 </style>

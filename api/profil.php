@@ -56,7 +56,7 @@ $data = json_decode($json);
 
 $input_typ = $data->action;
 
- if($input_typ === 'getProfil') {
+if($input_typ === 'getProfil') {
     if($data->token !== '') {
         $jwt = $data->token;
         try {
@@ -65,7 +65,8 @@ $input_typ = $data->action;
             $decoded_array = (array)$decoded;
             $id = (int)$decoded_array['ID'];
             $user = returnBase()->select('user', [
-                'mail', 'name', 'vorname', 'mail_privat', 'handy'], ['ID' => $id])[0];
+                'mail', 'name', 'vorname', 'mail_privat', 'handy',
+            ], ['ID' => $id])[0];
             $base['user'] = $user;
             echo json_encode($base);
 
@@ -77,5 +78,65 @@ $input_typ = $data->action;
     }
 }
 
+else if($input_typ === 'abonnieren') {
+    if ($data->token !== '') {
+        $jwt = $data->token;
+        try {
+            $decoded = JWT::decode($jwt, $publicKey, ['RS256']);
+
+            $decoded_array = (array)$decoded;
+            $id = (int)$decoded_array['ID'];
+            $user = returnBase()->select('user', [
+                'mail', 'name', 'vorname', 'mail_privat', 'handy',
+            ], ['ID' => $id])[0];
+            $abo_flex = returnBase()->select('user', ['abo_flex'], ['ID' => $id])[0]['abo_flex'];
+            $abo_flex_neu = '';
+            if ($abo_flex && $abo_flex !== '') {
+                $abo_flex_neu = $abo_flex . ',' . $data->id;
+                $abo_flex_array = explode(',', $abo_flex_neu);
+            }
+            else {
+                $abo_flex_neu = $data->id;
+                $abo_flex_array = [$data->id];
+            }
+            returnBase()->update('user', ['abo_flex' => $abo_flex_neu], ['ID' => $id] );
+
+            echo json_encode($abo_flex_array);
+
+        } catch(Exception $e) {
+            echo '405';
+        }
+    }
+    else {
+        echo '405';
+    }
+}
+
+else if($input_typ === 'desabonnieren') {
+    if ($data->token !== '') {
+        $jwt = $data->token;
+        try {
+            $decoded = JWT::decode($jwt, $publicKey, ['RS256']);
+
+            $decoded_array = (array)$decoded;
+            $id = (int)$decoded_array['ID'];
+            $user = returnBase()->select('user', [
+                'mail', 'name', 'vorname', 'mail_privat', 'handy',
+            ], ['ID' => $id])[0];
+            $abo_flex = returnBase()->select('user', ['abo_flex'], ['ID' => $id])[0]['abo_flex'];
+            $abo_flex_array = array_diff( explode(",", $abo_flex), [$data->id] );
+            $abo_flex_neu = implode(",", $abo_flex_array);
+            returnBase()->update('user', ['abo_flex' => $abo_flex_neu], ['ID' => $id] );
+
+            echo json_encode($abo_flex_array);
+
+        } catch(Exception $e) {
+            echo '405';
+        }
+    }
+    else {
+        echo '405';
+    }
+}
 
 

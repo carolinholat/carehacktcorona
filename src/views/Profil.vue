@@ -54,7 +54,9 @@
                         <div v-if="themenAbonniert.length > 0" class="d-flex">
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on }">
-                                    <v-btn class="primary" v-for="thema in themenAbonniert" :key="thema.id" v-on="on">
+                                    <v-btn class="primary" v-for="thema in themenAbonniert"
+                                           :key="thema.id" v-on="on"
+                                           @click="desabonnieren(thema.id)">
                                         {{thema.name}}
                                     </v-btn>
                                 </template>
@@ -66,7 +68,10 @@
                         <div v-if="themenNichtAbonniert.length > 0" class="d-flex">
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on }">
-                                    <v-btn class="primary" v-for="thema in themenNichtAbonniert" :key="thema.id"  v-on="on">
+                                    <v-btn class="primary" v-for="thema in themenNichtAbonniert"
+                                           :key="thema.id"
+                                           v-on="on"
+                                           @click="abonnieren(thema.id)">
                                         {{thema.name}}
                                     </v-btn>
                                 </template>
@@ -151,10 +156,37 @@
                     }
                 }
             },
-            abonnieren() {
+            abonnieren(id) {
+                let idInt = parseInt(id);
+                let postObj = {};
+                postObj.action = 'abonnieren';
+                postObj.token = this.$store.state.token;
+                postObj.id = idInt;
+                let self = this;
+                axios.post('http://localhost:8000/api/profil.php', postObj)
+                    .then(response => self.refreshProfil(response.data));
+
+                let thema = this.themenNichtAbonniert.filter(thema => thema.id === id)[0];
+                this.themenAbonniert.push(thema);
+                this.themenNichtAbonniert = this.themenNichtAbonniert.filter(thema => thema.id !== id);
 
             },
-            desabonnieren() {
+            desabonnieren(id) {
+                let idInt = parseInt(id);
+                let postObj = {};
+                postObj.action = 'desabonnieren';
+                postObj.token = this.$store.state.token;
+                postObj.id = idInt;
+                let self = this;
+                axios.post('http://localhost:8000/api/profil.php', postObj)
+                    .then(response => self.refreshProfil(response.data));
+
+                let thema = this.themenAbonniert.filter(thema => thema.id === id)[0];
+                this.themenNichtAbonniert.push(thema);
+                this.themenAbonniert = this.themenAbonniert.filter(thema => thema.id !== id);
+            },
+            refreshProfil(data) {
+                this.$store.commit('setAboFlex', data);
 
             },
             save() {
