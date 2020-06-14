@@ -1,5 +1,5 @@
 <template>
-    <v-footer padless style="background:  #87CEEB" absolute="absolute">
+    <v-footer padless :color="checkLogin" absolute="absolute">
         <!--pro juventa: #342484 -->
         <v-col
                 class="text-center"
@@ -14,7 +14,17 @@
 
 <script>
     export default {
-        name: "Footer"
+        name: "Footer",
+        computed: {
+            checkLogin() {
+                if (this.$store.state.token === '') {
+                    return '#87ceeb';
+                }
+                else {
+                    return /*'#a5d6a7' */ '#188600' ;
+                }
+            }
+        }
     }
 </script>
 

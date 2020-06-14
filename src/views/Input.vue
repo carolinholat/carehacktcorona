@@ -14,8 +14,8 @@
                     <br>
                     <v-btn color="primary" class="infoBtn" @click="status='Thema'">Thema erstellen</v-btn>
                     <br>
-                    <v-btn color="primary" class="infoBtn" @click="status='Lesestatistiken'">Lesestatistiken</v-btn>
-                    <br>
+                   <!-- <v-btn color="primary" class="infoBtn" @click="status='Lesestatistiken'">Lesestatistiken</v-btn>
+                    <br> -->
                     <v-btn color="primary" class="infoBtn" @click="status='Organigramm'">Organigramm verwalten</v-btn>
                     <br>
                     <v-btn color="primary" class="infoBtn" @click="status='Mitarbeiter'">Mitarbeiter</v-btn>
@@ -30,15 +30,21 @@
                     <v-col cols="10" class="mx-auto">
 
                         <FAQ v-if="status === 'FAQ'"
+                             :beitraege="beitraege"
                              :abteilungenListe="listObjectToArray(abteilungenListe)"
                              :kategorienListe="listObjectToArray(kategorienListe)"
                              :themenListe="listObjectToArray(themenListe)"
-                             @loadFragen="setUser()"/>
+                             @loadFragen="setUser()"
+                             :frageVonAbteilung="frageVonAbteilung"
+                             :frageVonKategorie="frageVonKategorie"
+                             :frageVonThema="frageVonAbteilung"/>
 
                         <Organigramm v-if="status === 'Organigramm'"
                                      :abteilungenListe="listObjectToArray(abteilungenListe)"
                                      :kategorienListe="listObjectToArray(kategorienListe)"
-                                     :themenListe="listObjectToArray(themenListe)"/>
+                                     :themenListe="listObjectToArray(themenListe)"
+                                     :kategorieHatAbteilung="kategorieHatAbteilung"
+                                     @loadNew="setThemenUndAbteilungen()"/>
 
                         <!-- <Beitraege v-if="status === 'Beitraege'" :beitraege="beitraege"/> -->
 
@@ -47,7 +53,9 @@
                         <Thema v-if="status === 'Thema'"
                                :abteilungenListe="listObjectToArray(abteilungenListe)"
                                :kategorienListe="listObjectToArray(kategorienListe)"
-                               :themenListe="listObjectToArray(themenListe)"/>
+                               :themenListe="listObjectToArray(themenListe)"
+                               :themaVonAbteilung="themaVonAbteilung"
+                               @loadNew="setThemenUndAbteilungen()"/>
 
                         <Fragen v-if="status === 'Fragen'"
                                 :fragen="fragenZuBeantworten"
@@ -93,34 +101,51 @@
                 user: [],
                 beitraege: [],
                 fragenZuBeantworten: [],
-                leseStatistiken: []
+                leseStatistiken: [],
+                frageVonAbteilung: [],
+                frageVonKategorie: [],
+                frageVonThema: [],
+                themaVonAbteilung: [],
+                kategorieHatAbteilung: []
             }
         },
         mounted() {
-            let self = this;
-            axios
-                .post('http://localhost:8000/api/init.php', 'themenundabteilungen')
-                .then(response => self.initThemenUndAbteilungen(response.data));
 
             this.setUser();
+            this.setThemenUndAbteilungen();
         },
         methods: {
+            //Axios
             setUser() {
                 let self = this;
                 let login = this.$store.state.token;
+                let url = this.$store.state.url;
                 axios
-                    .post('http://localhost:8000/api/superuser.php', login)
+                    .post(url + '/api/superuser.php', login)
                     .then(response => self.initFragenUndUser(response.data));
             },
+            setThemenUndAbteilungen() {
+                let self = this;
+                let url = this.$store.state.url;
+                axios
+                    .post(url + '/api/init.php', 'themenundabteilungen')
+                    .then(response => self.initThemenUndAbteilungen(response.data));
+            },
+            // Set DATA
             initThemenUndAbteilungen(data) {
                 this.themenListe = data.themen;
                 this.abteilungenListe = data.abteilungen;
                 this.kategorienListe = data.kategorien;
+                this.themaVonAbteilung = data.thema_von_abteilung;
+                this.kategorieHatAbteilung = data.kategorie_hat_abteilung;
             },
             initFragenUndUser(data) {
                 this.user = data.user;
                 this.beitraege = data.beitraege;
                 this.fragenZuBeantworten = data.fragen_zu_beantworten;
+                this.frageVonAbteilung = data.frage_von_abteilung;
+                this.frageVonKategorie = data.frage_von_kategorie;
+                this.frageVonThema = data.frage_von_thema;
             },
 
             listObjectToArray(obj) {

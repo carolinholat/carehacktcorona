@@ -7,6 +7,10 @@ namespace Composer\Autoload;
 class ComposerStaticInit3509cfd3cbd6f4e2fb34aaa1c3e745fb
 {
     public static $prefixLengthsPsr4 = array (
+        'T' => 
+        array (
+            'TelegramBot\\Api\\' => 16,
+        ),
         'P' => 
         array (
             'PhpKit\\ExtPDO\\' => 14,
@@ -27,6 +31,10 @@ class ComposerStaticInit3509cfd3cbd6f4e2fb34aaa1c3e745fb
     );
 
     public static $prefixDirsPsr4 = array (
+        'TelegramBot\\Api\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/telegram-bot/api/src',
+        ),
         'PhpKit\\ExtPDO\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-kit/ext-pdo/src',

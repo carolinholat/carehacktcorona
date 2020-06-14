@@ -6,6 +6,7 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
+    url: 'http://116.203.207.113',
     token: '',
     admin: false,
     abteilung: 0,
@@ -20,6 +21,9 @@ export default new Vuex.Store({
     },
     setAdmin: function(state) {
       state.admin = true;
+    },
+    unsetAdmin: function(state) {
+      state.admin = false;
     },
     setAbo: function(state, payload) {
       state.abo = payload;

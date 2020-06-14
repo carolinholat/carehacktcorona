@@ -16,12 +16,17 @@
             <template v-slot:body="{ items }">
                 <tr v-for="item in items" :key="item.ID">
                     <td v-for="(header, index) of headers" :key="header.value + index">
-                        <template v-if="header.value !== 'link'">
+                        <template v-if="header.value !== 'link' && header.value !== 'delete' ">
                             {{item[header.value]}}
                         </template>
                         <template v-else-if="header.value === 'link'">
-                            <v-btn @click="$emit('showUpdateItem', item.ID)">
+                            <v-btn @click="$emit('showUpdateItem', item.ID ? item.ID : item.value)">
                                 BEARBEITEN
+                            </v-btn>
+                        </template>
+                        <template v-else-if="header.value === 'delete'">
+                            <v-btn @click="$emit('deleteItem', item.ID ? item.ID : item.value)">
+                                LÖSCHEN
                             </v-btn>
                         </template>
                     </td>

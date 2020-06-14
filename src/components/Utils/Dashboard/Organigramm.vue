@@ -4,10 +4,12 @@
             <v-radio
                     :label="'Abteilungen'"
                     :value="'Abteilung'"
+                    @change="reset()"
             ></v-radio>
             <v-radio
                     :label="'Bereiche'"
                     :value="'Kategorie'"
+                    @change="reset()"
             ></v-radio>
         </v-radio-group>
 
@@ -27,66 +29,46 @@
                         :items="select === 'Kategorie' ? abteilungenListe : kategorienListe"
                         v-model="newItemChildren">
                 </v-select>
-                <v-btn>SPEICHERN</v-btn>
+                <v-btn @click="save()">SPEICHERN</v-btn>
+                <v-btn v-if="updateId !== 0" @click="reset()">ZURÜCK</v-btn>
             </div>
         </div>
+        <ItemDatatable
+                :headers="headers"
+                :itemArray="select === 'Abteilung' ? abteilungenListe : kategorienListe"
+                @showUpdateItem="showUpdateItem($event)"
+                @deleteItem="tryDeleteItem($event)"
+        />
 
-        <v-text-field
-                v-if="select !== ''"
-                v-model="search"
-                append-icon="mdi-magnify"
-                label="Suche"
-                single-line
-                hide-details
-        ></v-text-field>
-        <v-data-table v-if="select !== ''"
-                      :headers="headers"
-                      :items="select === 'Abteilung' ? abteilungenListe : kategorienListe"
-                      :items-per-page="5"
-                      :search="search"
-                      @current-items="getFiltered"
-                      class="elevation-1">
-            <template v-slot:body="{ items }">
-                <tr v-for="item in items" :key="item.value">
-                    <td v-for="(header, index) of headers" :key="header.value + index">
-                        <template v-if="header.value !== 'link'">
-                            {{item[header.value]}}
-                        </template>
-                        <template v-else-if="header.value === 'link'">
-                            <v-btn @click="showUpdateItem(item.value)">
-                                BEARBEITEN
-                            </v-btn>
-                        </template>
-                        <template v-else-if="header.value === 'delete'">
-                            <v-btn @click="deleteItem(item.value)">
-                                BEARBEITEN
-                            </v-btn>
-                        </template>
-                    </td>
-                </tr>
-            </template>
-        </v-data-table>
         <WarningOverlay
                 v-if="overlay"
                 @weiter="overlay = false"
                 :msg="'Es fehlen noch Angaben. Klicken Sie, um dieses Fenster zu schließen'"/>
+        <WarningDelete
+                v-if="overlayDelete"
+                @zurueck="overlayDelete = false"
+                @loeschen="deleteItem(updateId)"/>
     </div>
 </template>
 
 <script>
     import WarningOverlay from "../../layout/WarningOverlay"
     import axios from "../../../plugins/axios";
+    import ItemDatatable from '../ItemDatatable';
+    import WarningDelete from "../../layout/WarningDelete"
 
     export default {
         name: "Organigramm",
         props: {
             abteilungenListe: Array,
             kategorienListe: Array,
-            themenListe: Array
-
+            themenListe: Array,
+            kategorieHatAbteilung: Array
         },
         components: {
-            WarningOverlay
+            WarningOverlay,
+            ItemDatatable,
+            WarningDelete
         },
         data() {
             return {
@@ -97,26 +79,104 @@
                 abteilung: '',
                 abteilungId: 0,
                 kategorieId: 0,
-                select: '',
-                search: '',
-                headers: [{text: 'Bezeichnung', value: 'text'}, {text: 'Bearbeiten', value: 'link'}],
+                select: 'Abteilung',
+            /* search: '', */
+                headers: [{text: 'Bezeichnung', value: 'text'}, {text: 'Bearbeiten', value: 'link'}, {
+                    text: 'Löschen',
+                    value: 'delete'
+                }],
                 filteredItems: [],
-                overlay: false
+                overlay: false,
+                overlayDelete: false
             }
         },
         methods: {
+            reset() {
+                this.updateId = 0;
+                this.newItem = '';
+                this.newItemChildren = [];
+                this.abteilung = '';
+                this.abteilungId = 0;
+                this.kategorieId = 0;
+                this.filteredItems = [];
+            },
             showUpdateItem(id) {
                 this.updateId = id;
                 this.addNew = true;
                 let list = this.select === 'Abteilung' ? this.abteilungenListe : this.kategorienListe;
                 let item = list.filter((item) => item.value === id)[0];
                 this.newItem = item.text;
+
+                // zugeordnete abteilungen/kategorien filtern
+                let zugewiesenMapArray = [];
+                let zugewiesen = [];
+
+                if (this.select === 'Abteilung') {
+                    zugewiesenMapArray = this.kategorieHatAbteilung.filter((obj) => parseInt(obj.abteilung_id) === item.value);
+                    for (let map of zugewiesenMapArray) {
+                        zugewiesen.push(parseInt(map.kategorie_id));
+                    }
+                }
+                else if (this.select === 'Kategorie') {
+                    zugewiesenMapArray = this.kategorieHatAbteilung.filter((obj) => parseInt(obj.kategorie_id) === item.value);
+                    for (let map of zugewiesenMapArray) {
+                        zugewiesen.push(parseInt(map.abteilung_id));
+                    }
+                }
+
+                for (let abteilungBzwKategorie of list) {
+                    if (zugewiesen.includes(abteilungBzwKategorie.value)) {
+                        this.newItemChildren.push(abteilungBzwKategorie);
+                    }
+                }
             },
             getFiltered(e) {
                 this.filteredItems = e;
             },
             deleteItem(id) {
-
+                this.updateId = id;
+                this.$emit('loadNew');
+                this.overlayDelete = false;
+                // TODO: POST
+            },
+            tryDeleteItem(id) {
+                this.updateId = id;
+                this.overlayDelete = true;
+            },
+            save() {
+                if (this.newItem === '' || this.newItemChildren.length < 1) {
+                    this.overlay = true;
+                }
+                else {
+                    let postObj = {};
+                    if (this.updateId === 0) {
+                        if (this.select === 'Abteilung') {
+                            postObj.action = 'abteilungInsert';
+                            postObj.abteilung = this.newItem;
+                            postObj.kategorien = this.newItemChildren;
+                        }
+                        else if (this.select === 'Kategorie') {
+                            postObj.action = 'kategorieInsert';
+                            postObj.kategorie = this.newItem;
+                            postObj.abteilungen = this.newItemChildren;
+                        }
+                    }
+                    else {
+                        postObj.ID = this.updateId;
+                        if (this.select === 'Abteilung') {
+                            postObj.action = 'abteilungUpdate';
+                            postObj.abteilung = this.newItem;
+                            postObj.kategorien = this.newItemChildren;
+                        }
+                        else if (this.select === 'Kategorie') {
+                            postObj.action = 'kategorieUpdate';
+                            postObj.kategorie = this.newItem;
+                            postObj.abteilungen = this.newItemChildren;
+                        }
+                    }
+                }
+                this.$emit('loadNew');
+                this.reset();
             }
         }
     }

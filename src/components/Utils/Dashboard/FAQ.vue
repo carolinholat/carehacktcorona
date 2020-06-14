@@ -68,7 +68,14 @@
         </v-select>
         <v-switch class="spaced" v-model="frageOeffentlich" label="Öffentlich sichtbar?"></v-switch>
 
-        <v-btn @click="saveFAQ()">SPEICHERN</v-btn>
+        <v-btn @click="saveFAQ()">SPEICHERN</v-btn><br>
+        <v-btn class="spaced" @click="showList = ! showList">Beiträge anzeigen</v-btn>
+        <ItemDatatable
+                v-if="showList"
+                :headers="headers"
+                :itemArray="beitraege"
+                @showUpdateItem="showUpdateBeitrag($event)"
+        />
         <WarningOverlay
                 v-if="overlay"
                 @weiter="overlay = false"
@@ -83,6 +90,8 @@
     import axios from "../../../plugins/axios";
     import WarningOverlay from "../../layout/WarningOverlay"
     import WarningDelete from "../../layout/WarningDelete"
+    import ItemDatatable from '../ItemDatatable';
+
 
 
     export default {
@@ -90,14 +99,21 @@
         props: {
             abteilungenListe: Array,
             kategorienListe: Array,
-            themenListe: Array
+            themenListe: Array,
+            beitraege: Array,
+            frageVonAbteilung: Array,
+            frageVonKategorie: Array,
+            frageVonThema: Array
         },
         components: {
             WarningOverlay,
-            WarningDelete
+            WarningDelete,
+            ItemDatatable
         },
         data() {
             return {
+                beitragId: 0,
+                showList: false,
                 frageText: '',
                 antwortText: '',
                 frageAbteilungen: [],
@@ -107,10 +123,72 @@
                 abteilungFreigeben: null,
                 kategorieFreigeben: null,
                 overlay: false,
+                headers:  [{text: 'Frage', value: 'frage'}, {text: 'Bearbeiten', value: 'link'}],
                 ampel: ''
             }
         },
         methods: {
+            showUpdateBeitrag(id){
+                this.beitragId = id;
+                let chosenBeitrag = this.beitraege.filter((user) => user.ID === id)[0];
+                this.frageText = chosenBeitrag.frage;
+                this.antwortText = chosenBeitrag.antwort;
+                if (chosenBeitrag.freigegeben_fuer_gast === "1") {
+                    this.frageOeffentlich = true;
+                }
+                else {
+                    this.frageOeffentlich = false;
+                }
+                this.abteilungFreigeben = chosenBeitrag.freigegeben_fuer_abteilung;
+                this.kategorieFreigeben = chosenBeitrag.freigegeben_fuer_kategorie;
+                if (chosenBeitrag.wichtigkeit === 'normal') {
+                    this.ampel = 'gruen';
+                }
+                else if (chosenBeitrag.wichtigkeit === 'wichtig') {
+                    this.ampel = 'gelb';
+                }
+                else if (chosenBeitrag.wichtigkeit === 'sehr wichtig') {
+                    this.ampel = 'rot';
+                }
+
+                // zugeordnete abteilungen, themen, kategorien filtern
+                // ABTEILUNG
+                let abteilungenMapArray = this.frageVonAbteilung.filter((item) => item.frage_ID === chosenBeitrag.ID);
+                let abteilungen = [];
+                for (let map of abteilungenMapArray) {
+                    abteilungen.push(parseInt(map.abteilung_id));
+                }
+                for (let abteilung of this.abteilungenListe) {
+                    if (abteilungen.includes(abteilung.value)) {
+                        this.frageAbteilungen.push(abteilung);
+                    }
+                }
+
+                // KATEGORIE
+                let kategorienMapArray = this.frageVonKategorie.filter((item) => item.frage_ID === chosenBeitrag.ID);
+                let kategorien = [];
+                for (let map of kategorienMapArray) {
+                    kategorien.push(parseInt(map.kategorie_id));
+                }
+                for (let kategorie of this.kategorienListe) {
+                    if (kategorien.includes(kategorie.value)) {
+                        this.frageKategorien.push(kategorie);
+                    }
+                }
+
+                // Thema
+                let themenMapArray = this.frageVonThema.filter((item) => item.frage_ID === chosenBeitrag.ID);
+                let themen = [];
+                for (let map of themenMapArray) {
+                    themen.push(parseInt(map.thema_id));
+                }
+                for (let thema of this.themenListe) {
+                    if (themen.includes(thema.value)) {
+                        this.frageKategorien.push(thema);
+                    }
+                }
+            },
+
             saveFAQ() {
                 let postObj = {};
                 postObj.action = 'frageInsert';
@@ -131,8 +209,9 @@
                     this.overlay = true;
                 }
                 else {
+                    let url = this.$store.state.url;
                     axios
-                        .post('http://localhost:8000/api/new_items.php', postObj)
+                        .post(url + '/api/new_items.php', postObj)
                         .then(response => self.reload());
                 }
 

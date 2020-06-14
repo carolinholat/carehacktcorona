@@ -6,6 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'TelegramBot\\Api\\' => array($vendorDir . '/telegram-bot/api/src'),
     'PhpKit\\ExtPDO\\' => array($vendorDir . '/php-kit/ext-pdo/src'),
     'PHPMailer\\PHPMailer\\' => array($vendorDir . '/phpmailer/phpmailer/src'),
     'Medoo\\' => array($vendorDir . '/catfan/medoo/src'),

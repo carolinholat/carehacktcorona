@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-toolbar style="background: #87CEEB  ; height: 100px">
+        <v-toolbar style="height: 100px;"  :color="checkLogin">
             <!--#ADD8E6  #1E90FF-->
             <!--<div class="flex-grow-1"></div>
 
@@ -22,16 +22,20 @@
             </div> -->
             <v-btn icon style="margin-left: 50px">
                 <router-link to="/" class="routerLink">
-                <img src="../../../public/LogoSCIO_care.png" style="height: 100px; width: 120px; margin-top: 10px; padding-top: 20px"/>
+                    <img src="../../../public/LogoSCIO_care.png"
+                         style="height: 100px; width: 120px; margin-top: 10px; padding-top: 20px"/>
                 </router-link>
             </v-btn>
 
-            <v-toolbar-title style="margin-left: 50px; color: black" justify="center">
+            <v-toolbar-title style="margin-left: 50px; color: black"
+                             justify="center"
+                             class="hidden-sm-and-down"
+            >
                 Pro-Juventa Kommunikation
             </v-toolbar-title>
 
             <v-spacer></v-spacer>
-            <v-btn icon style="margin-right: 70px" v-if="$store.state.admin">
+            <v-btn icon style="margin-right: 70px" v-if="$store.state.admin && $store.state.token !== ''">
                 <v-btn text>
                     <router-link to="/input" class="routerLink">DASHBOARD</router-link>
                 </v-btn>
@@ -42,9 +46,10 @@
                 </v-btn>
             </v-btn>
 
-            <v-btn icon style="margin-right: 50px" justify="center">
+            <v-btn icon style="margin-right: 50px" justify="center" @click="logout()">
                 <v-btn text>
-                    <router-link to="/login" class="routerLink">{{$store.state.token === '' ? 'LOGIN' : 'LOGOUT'}}</router-link>
+                    <router-link to="/login" class="routerLink">{{$store.state.token === '' ? 'LOGIN' : 'LOGOUT'}}
+                    </router-link>
                 </v-btn>
             </v-btn>
 
@@ -53,6 +58,10 @@
                     <router-link to="/feedback" class="routerLink">FEEDBACK</router-link>
                 </v-btn>
             </v-btn>
+            <v-app-bar-nav-icon
+                    class="hidden-md-and-up"
+                    @click="drawer = !drawer"
+            />
 
         </v-toolbar>
         <v-toolbar style="background: whitesmoke">
@@ -86,8 +95,9 @@
                 <router-link to="/infos" class="routerLink">FAQ</router-link>
             </v-btn>
             <v-autocomplete
+                    class="hidden-sm-and-down"
                     icon style="margin-right: 50px; max-width: 20% !important; margin-top: 20px;"
-                    :items="['abc', 'def']"
+                    :items="itemsSuche"
                     :search-input.sync="search"
                     hide-no-data
                     hide-selected
@@ -95,19 +105,59 @@
                     placeholder="Ihr Suchbegriff"
                     prepend-icon="mdi-magnify"
                     return-object
+                    @input="toMeldung($event.value)"
             ></v-autocomplete>
 
 
         </v-toolbar>
+        <Drawer
+                v-model="drawer"
+        />
     </div>
 </template>
 
 <script>
+    import Drawer from './Drawer'
     export default {
+        props: {
+            itemsSuche: Array
+        },
+        components: {
+          Drawer
+        },
         name: "TitleBar",
         data() {
             return {
-                search: ''
+                search: '',
+                drawer: null
+            }
+        },
+        methods: {
+            logout() {
+                this.$store.commit('setToken', '');
+                this.$store.commit('setAbo', []);
+                this.$store.commit('setAboFix', []);
+                this.$store.commit('setAboFlex', []);
+                this.$store.commit('setAbteilung', 0);
+                this.$store.commit('setKategorien', []);
+                this.$store.commit('unsetAdmin');
+            },
+            toMeldung(link) {
+                if(this.$route !== 'infos') {
+                    this.$router.push({path: 'infos?id=' + link});
+                } else {
+                    this.$emit('showMeldung', link);
+                }
+            }
+        },
+        computed: {
+            checkLogin() {
+                if (this.$store.state.token === '') {
+                    return '#87ceeb';
+                }
+                else {
+                    return /*'#a5d6a7' */  '#188600';
+                }
             }
         }
     }
@@ -122,8 +172,9 @@
 
     .routerLink:hover {
         text-decoration: none;
-       /* color: yellow; */
+        /* color: yellow; */
         color: #0d47a1;
     }
+
 
 </style>

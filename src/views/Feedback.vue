@@ -55,8 +55,9 @@
                 }
                 else {
                     let self = this;
+                    let url = this.$store.state.url;
                     axios
-                        .post('http://localhost:8000/api/new_items.php', postObj)
+                        .post(url + '/api/new_items.php', postObj)
                         .then(response => self.antwortText = '');
                 }
             }

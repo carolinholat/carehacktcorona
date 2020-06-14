@@ -46,11 +46,12 @@
         components: {},
         methods: {
             login() {
+                let url = this.$store.state.url;
                 let postObj = {};
                 postObj.mail = this.mail;
                 postObj.pw = this.pw;
                 let self = this;
-                axios.post('http://localhost:8000/api/login.php', postObj)
+                axios.post(url + '/api/login.php', postObj)
                     .then(response => self.setToken(response.data));
             },
             setToken(responseData) {
@@ -66,7 +67,6 @@
                     if (this.$store.state.token !== "") {
                         this.$router.push({ path: '/infos' });
                     }
-                    console.log(responseData)
                     if (responseData.role === 'admin') {
                         this.$store.commit('setAdmin');
                     }

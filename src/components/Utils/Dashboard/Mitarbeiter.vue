@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-btn class="spaced" @click="addNew = !addNew">{{hinzuOderBearbeitenText}}</v-btn>
+        <v-btn class="spaced" @click="addNew = !addNew">{{ updateUser === 0 ? 'MITARBEITER*IN HINZUFÜGEN' : 'MITARBEITER*IN BEARBEITEN'}}</v-btn>
         <br/>
         <div v-if="addNew">
             <v-text-field
@@ -24,9 +24,8 @@
                     v-model="personAbteilung"
             ></v-select>
 
-            <v-btn class="spaced" v-if="updateUser > 0" @click="deleteUser()">MITARBEITER*IN LÖSCHEN</v-btn>
-            <br/>
             <v-btn class="spaced" @click="saveUser()">SPEICHERN</v-btn>
+            <v-btn v-if="updateUser !== 0" @click="reset()">ZURÜCK</v-btn>
         </div>
         <v-btn class="spaced" @click="showList = ! showList">Mitarbeiter*innenverzeichnis anzeigen</v-btn>
         <ItemDatatable
@@ -34,47 +33,24 @@
                 :headers="headers"
                 :itemArray="userArray"
                 @showUpdateItem="showUpdateUser($event)"
+                @deleteItem="tryDeleteUser($event)"
         />
-        <!--<v-text-field
-                v-if="showList"
-                v-model="search"
-                append-icon="mdi-magnify"
-                label="Suche"
-                single-line
-                hide-details
-        ></v-text-field>
-        <v-data-table v-if="showList"
-                      :headers="headers"
-                      :items="userArray"
-                      :items-per-page="5"
-                      :search="search"
-                      class="elevation-1">
-            <template v-slot:body="{ items }">
-                <tr v-for="item in items" :key="item.ID">
-                    <td v-for="(header, index) of headers" :key="header.value + index">
-                        <template v-if="header.value !== 'link'">
-                            {{item[header.value]}}
-                        </template>
-                        <template v-else-if="header.value === 'link'">
-                            <v-btn @click="showUpdateUser(item.ID)">
-                                BEARBEITEN
-                            </v-btn>
-                        </template>
-                    </td>
-                </tr>
-            </template>
-        </v-data-table> -->
 
         <WarningOverlay
                 v-if="overlay"
                 @weiter="overlay = false"
                 :msg="'Es fehlen noch Angaben. Klicken Sie, um dieses Fenster zu schließen'"/>
+        <WarningDelete
+                v-if="overlayDelete"
+                @zurueck="overlayDelete = false"
+                @loeschen="deleteUser(updateUser)"/>
     </div>
 </template>
 
 <script>
     import axios from "../../../plugins/axios";
     import WarningOverlay from "../../layout/WarningOverlay"
+    import WarningDelete from "../../layout/WarningDelete"
     import ItemDatatable from '../ItemDatatable';
 
     export default {
@@ -87,13 +63,13 @@
         },
         components: {
             WarningOverlay,
-            ItemDatatable
+            ItemDatatable,
+            WarningDelete
         },
         methods: {
             showUpdateUser(id) {
 
                 this.updateUser = id;
-                this.hinzuOderBearbeitenText = 'Mitarbeiterdaten bearbeiten'
                 let chosenUser = this.user.filter((user) => user.ID === id)[0];
                 this.personName = chosenUser.name;
                 this.personVorname = chosenUser.vorname;
@@ -116,8 +92,9 @@
                     this.overlay = true;
                 }
                 else {
+                    let url = this.$store.state.url;
                     axios
-                        .post('http://localhost:8000/api/new_items.php', postObj)
+                        .post(url + '/api/new_items.php', postObj)
                         .then(response => console.log(response.data));
                     this.personVorname = '';
                     this.personName = '';
@@ -128,12 +105,18 @@
                 }
             },
 
-            deleteUser() {
+            deleteUser(id = false) {
                 let postObj = {};
                 postObj.action = 'userDelete';
-                postObj.ID = this.updateUser;
+                if (id) {
+                    postObj.ID = id;
+                }
+                else {
+                    postObj.ID = this.updateUser;
+                }
+                let url = this.$store.state.url;
                 axios
-                    .post('http://localhost:8000/api/new_items.php', postObj)
+                    .post(url + '/api/new_items.php', postObj)
                     .then(response => console.log(response.data));
                 this.personVorname = '';
                 this.personName = '';
@@ -141,6 +124,18 @@
                 this.personAbteilung = '';
                 this.addNew = false;
                 this.$emit('loadUser');
+                this.overlayDelete = false;
+            },
+            tryDeleteUser(id) {
+                this.updateUser = id;
+                this.overlayDelete = true;
+            },
+            reset() {
+                this.updateUser = 0;
+                this.personVorname = '';
+                this.personName = '';
+                this.personMail = '';
+                this.personAbteilung = '';
             }
         },
         data() {
@@ -157,8 +152,9 @@
                 headers: [{text: 'Vorname', value: 'vorname'}, {text: 'Name', value: 'name'}, {
                     text: 'Abteilung',
                     value: 'abteilung'
-                }, {text: 'Bearbeiten', value: 'link'}],
-                overlay: false
+                }, {text: 'Bearbeiten', value: 'link'}, {text: 'Löschen', value: 'delete'}],
+                overlay: false,
+                overlayDelete: false
             }
         },
         computed: {

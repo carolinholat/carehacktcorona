@@ -117,8 +117,9 @@
         },
         mounted() {
             let self = this;
+            let url = this.$store.state.url;
             axios
-                .post('http://localhost:8000/api/init.php', 'themenundabteilungen')
+                .post(url + '/api/init.php', 'themenundabteilungen')
                 .then(response => self.initThemenUndAbteilungen(response.data));
 
             let postObj = {};
@@ -126,7 +127,7 @@
             postObj.token = this.$store.state.token;
 
             axios
-                .post('http://localhost:8000/api/profil.php', postObj)
+                .post(url + '/api/profil.php', postObj)
                 .then(response => self.initProfil(response.data));
         },
         methods: {
@@ -163,7 +164,8 @@
                 postObj.token = this.$store.state.token;
                 postObj.id = idInt;
                 let self = this;
-                axios.post('http://localhost:8000/api/profil.php', postObj)
+                let url = this.$store.state.url;
+                axios.post(url + '/api/profil.php', postObj)
                     .then(response => self.refreshProfil(response.data));
 
                 let thema = this.themenNichtAbonniert.filter(thema => thema.id === id)[0];
@@ -178,7 +180,8 @@
                 postObj.token = this.$store.state.token;
                 postObj.id = idInt;
                 let self = this;
-                axios.post('http://localhost:8000/api/profil.php', postObj)
+                let url = this.$store.state.url;
+                axios.post(url + '/api/profil.php', postObj)
                     .then(response => self.refreshProfil(response.data));
 
                 let thema = this.themenAbonniert.filter(thema => thema.id === id)[0];
@@ -212,9 +215,9 @@
                 this.personName = '';
                 this.personMail = '';
                 this.personAbteilung = '';
-                console.log(this.thema + 'TEST');
+                let url = this.$store.state.url;
                 axios
-                    .post('http://localhost:8000/carehacktcorona/api/new_items.php', postObj)
+                    .post(url + '/api/new_items.php', postObj)
                     .then(response => console.log(response.data));
             }
         },
