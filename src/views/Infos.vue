@@ -7,11 +7,13 @@
                 <h3>Geschäftsbereiche</h3>
 
                 <v-switch
-                        v-if="$store.state.token !== ''"
+                        v-if="$store.state.token !== ''  && abteilungenListe.length > 0 && kategorienListe.length > 0 && themenListe.length > 0"
                         @change="modifyFilterPersonalisiert()"
                         v-model="filterPersonalisiert" label="Personalisierten Filter anwenden"></v-switch>
 
-                <v-switch v-model="filterAbteilungen" label="Nach Abteilung filtern?"
+                <v-switch v-model="filterAbteilungen"
+                          v-if="abteilungenListe.length > 0"
+                          label="Nach Abteilung filtern?"
                           @change="closeFilter('abteilungen')"></v-switch>
                 <div v-if="filterAbteilungen">
                     <v-checkbox v-for="abteilung in abteilungenListe"
@@ -22,7 +24,9 @@
 
                 </div>
 
-                <v-switch v-model="filterBereiche" label="Nach Bereich filtern?"
+                <v-switch v-model="filterBereiche"
+                          v-if="kategorienListe.length > 0"
+                          label="Nach Bereich filtern?"
                           @change="closeFilter('kategorien')"></v-switch>
                 <div v-if="filterBereiche">
                     <v-checkbox v-for="bereich in kategorienListe"
@@ -32,7 +36,9 @@
                                 @change="filteredFragen()"></v-checkbox>
                 </div>
 
-                <v-switch v-model="filterThemen" label="Nach Themen filtern?"
+                <v-switch v-model="filterThemen"
+                          v-if="themenListe.length > 0"
+                          label="Nach Themen filtern?"
                           @change="closeFilter('themen')"></v-switch>
                 <div v-if="filterThemen">
                     <v-checkbox v-for="thema in themenListe"
@@ -48,6 +54,7 @@
         <v-col  cols="12" lg="6" >
             <div>
                 <v-autocomplete
+                        v-if="fragen.length > 0"
                         class="hidden-md-and-up"
                         icon style="margin-right: 50px; max-width: 50% !important; margin-top: 20px;"
                         :items="fragen"
@@ -112,17 +119,19 @@
                 </div>
             </v-card>
         </v-col>
+        <WarningServerBug v-if="$store.state.serverBug"/>
     </v-row>
-
 </template>
 
 <script>
     import axios from "../plugins/axios";
     import NewsTicker from './../components/Utils/NewsTicker';
+    import WarningServerBug from '../../src/components/layout/WarningServerBug'
 
     export default {
         components: {
-            NewsTicker
+            NewsTicker,
+            WarningServerBug
         },
         props: {
             meldungId: Number
@@ -133,15 +142,14 @@
             let self = this;
             axios
                 .post(url + '/api/filter_fragen.php', token)
-                .then(response => self.initFragen(response.data));
+                .then(response => self.initFragen(response.data))
+                .catch(error => self.handleErrors(error));
 
             axios
                 .post(url + '/api/init.php', 'themenundabteilungen')
-                .then(response => self.initThemenUndAbteilungen(response.data));
+                .then(response => self.initThemenUndAbteilungen(response.data))
+                .catch(error => self.handleErrors(error));
 
-            axios
-                .get(url + '/api/index.php')
-                .then(response => console.log(response.data, 'TEST'));
         },
         watch: {
             meldungId: function(val){
@@ -152,6 +160,11 @@
             }
         },
         methods: {
+            handleErrors(error) {
+                if (error /*.response.status < 200 || error.response.status > 299 */ ) {
+                    this.$store.commit('setServerBug', true);
+                }
+            },
             initFragen(data) {
                 this.fragen = data.fragen;
                 this.$emit('loadItems', data.fragen);

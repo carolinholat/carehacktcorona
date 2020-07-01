@@ -23,18 +23,19 @@
                 </v-col>
             </v-row>
         </v-card>
-
+        <WarningServerBug v-if="$store.state.serverBug"/>
     </div>
 </template>
 
 <script>
     import axios from "../plugins/axios";
     import WarningOverlay from "../../src/components/layout/WarningOverlay"
-
+    import WarningServerBug from '../../src/components/layout/WarningServerBug'
 
     export default {
         components: {
-            WarningOverlay
+            WarningOverlay,
+            WarningServerBug
         },
         data() {
             return {
@@ -45,6 +46,11 @@
         mounted() {
         },
         methods: {
+            handleErrors(error) {
+                if (error /*.response.status < 200 || error.response.status > 299 */ ) {
+                    this.$store.commit('setServerBug', true);
+                }
+            },
             save() {
                 let postObj = {};
                 postObj.action = 'feedbackInsert';
@@ -58,7 +64,8 @@
                     let url = this.$store.state.url;
                     axios
                         .post(url + '/api/new_items.php', postObj)
-                        .then(response => self.antwortText = '');
+                        .then(response => self.antwortText = '')
+                        .catch(error => self.handleErrors(error));
                 }
             }
         },

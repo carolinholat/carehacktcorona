@@ -6,14 +6,17 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    url: 'http://116.203.207.113',
+      // url: 'http://116.203.207.113/carehacktcorona',
+    url: location.protocol + "//" +  'scio.projuve.de',
+   // url: 'http://localhost:8000',
     token: '',
     admin: false,
     abteilung: 0,
     abo: [],
     aboFix: [],
     aboFlex: [],
-    kategorien: []
+    kategorien: [],
+    serverBug: false
   },
   mutations: {
     setToken: function(state, payload) {
@@ -39,6 +42,9 @@ export default new Vuex.Store({
     },
     setKategorien: function(state, payload) {
       state.kategorien = payload;
+    },
+    setServerBug: function(state, payload) {
+      state.serverBug = payload;
     }
   },
 })

@@ -7,7 +7,9 @@ header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-require './base.php';
+use Medoo\Medoo;
+require 'base.php';
+$database = new Medoo($base_array_vars);
 
 use \Firebase\JWT\JWT;
 
@@ -28,20 +30,20 @@ $json = file_get_contents('php://input');
 
 $data = json_decode($json);
 
-function getFrage($id) {
+function getFrage($id, $database) {
     error_log('id' . $id);
-    return returnBase()->select('fragen', ['frage', 'antwort', 'zeitpunkt_erstellung', 'freigegeben_fuer_abteilung', 'freigegeben_fuer_kategorie', 'freigegeben_fuer_gast', 'forum_thread', 'zeitpunkt_antwort'], ['forum_thread' => $id]);
+    return $database->select('fragen', ['frage', 'antwort', 'zeitpunkt_erstellung', 'freigegeben_fuer_abteilung', 'freigegeben_fuer_kategorie', 'freigegeben_fuer_gast', 'forum_thread', 'zeitpunkt_antwort'], ['forum_thread' => $id]);
 }
 
-function getBeitraege($id) {
-    $beitraege = returnBase()->select('forum_beitraege', ["[><]user" => ["user_ID" => "ID"], 'forum_beitraege.zeitstempel'], ['forum_beitraege.text', 'user.name', 'user.vorname', 'forum_beitraege.zeitstempel'], ['thread_ID' => $id, "ORDER" => ["zeitstempel" => "ASC"]]);
+function getBeitraege($id, $database) {
+    $beitraege = $database->select('forum_beitraege', ["[><]user" => ["user_ID" => "ID"], 'forum_beitraege.zeitstempel'], ['forum_beitraege.text', 'user.name', 'user.vorname', 'forum_beitraege.zeitstempel'], ['thread_ID' => $id, "ORDER" => ["zeitstempel" => "ASC"]]);
 
     return $beitraege;
 }
 
-function checkAuth($jwt, $publicKey, $id) {
+function checkAuth($jwt, $publicKey, $id, $database) {
     if($jwt === '') {
-        $freigegeben = getFrage($id)[0]['freigegeben_fuer_gast'];
+        $freigegeben = getFrage($id, $database)[0]['freigegeben_fuer_gast'];
         if($freigegeben !== null) {
             return true;
         } else {
@@ -55,15 +57,15 @@ function checkAuth($jwt, $publicKey, $id) {
             $decoded_array = (array)$decoded;
             $abteilung = $decoded_array['abteilung_id'];
 
-            if(getFrage($id)['freigegeben_fuer_abteilung'] && getFrage($id)[0]['freigegeben_fuer_abteilung'] !== $abteilung) {
+            if(getFrage($id, $database)['freigegeben_fuer_abteilung'] && getFrage($id, $database)[0]['freigegeben_fuer_abteilung'] !== $abteilung) {
                 $auth = false;
             }
             // alle kategorien suchen, denen die abteilung gehört
-            $kategorie_array_res = returnBase()->select('kategorie_hat_abteilung', ['kategorie_id'], ['abteilung_id' => $abteilung]);
+            $kategorie_array_res = $database->select('kategorie_hat_abteilung', ['kategorie_id'], ['abteilung_id' => $abteilung]);
             $kategorien = array_column($kategorie_array_res, 'kategorie_id');
 
             // prüfen, ob wert vorhanden und wenn ja, in array
-            if(getFrage($id)['freigegeben_fuer_kategorie'] && !in_array(getFrage($id)[0]['freigegeben_fuer_kategorie'], $kategorien, false)) {
+            if(getFrage($id, $database)['freigegeben_fuer_kategorie'] && !in_array(getFrage($id, $database)[0]['freigegeben_fuer_kategorie'], $kategorien, false)) {
                 $auth = false;
             }
             return $auth;
@@ -76,10 +78,10 @@ function checkAuth($jwt, $publicKey, $id) {
 
 
 // wenn GET, dann gebe nur öffentlich zugängliche Fragen zurück
-if(checkAuth($data->token, $publicKey, $data->id)) {
+if(checkAuth($data->token, $publicKey, $data->id, $database)) {
     $base = [];
-    $frage = getFrage($data->id);
-    $beitraege = getBeitraege($data->id);
+    $frage = getFrage($data->id, $database);
+    $beitraege = getBeitraege($data->id, $database);
     $base['frage'] = $frage;
     $base['beitraege'] = $beitraege;
     echo json_encode($base);

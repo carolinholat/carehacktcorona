@@ -1,19 +1,15 @@
 <?php
 
-require dirname(__DIR__) . '/vendor/autoload.php';
-
-// Using Medoo namespace
-use Medoo\Medoo;
-
-function returnBase() {
-    $database = new Medoo([
-        'database_type' => 'mariadb',
+$base_array_vars =  //'database_type' => 'mariadb',
+    [
+        'database_type' => 'mysql',
         'database_name' => 'carehacktcorona',
         'server' => '127.0.0.1',
         'username' => 'coffeeJunkie',
-        'password' => 'projuventa',
+        // 'password' => 'projuventa',
+        'password' => 'coffeeJunkie',
         'charset' => 'utf8mb4',
         'collation' => 'utf8mb4_general_ci',
-    ]);
-    return $database;
-}
+    ];
+
+

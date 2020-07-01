@@ -27,7 +27,9 @@
             <v-btn class="spaced" @click="saveUser()">SPEICHERN</v-btn>
             <v-btn v-if="updateUser !== 0" @click="reset()">ZURÜCK</v-btn>
         </div>
-        <v-btn class="spaced" @click="showList = ! showList">Mitarbeiter*innenverzeichnis anzeigen</v-btn>
+        <v-btn class="spaced"
+               v-if="user.length > 0"
+               @click="showList = ! showList">Mitarbeiter*innenverzeichnis anzeigen</v-btn>
         <ItemDatatable
                 v-if="showList"
                 :headers="headers"
@@ -95,7 +97,8 @@
                     let url = this.$store.state.url;
                     axios
                         .post(url + '/api/new_items.php', postObj)
-                        .then(response => console.log(response.data));
+                        .then(response => console.log(response.data))
+                        .catch(self.$store.commit('setServerBug', true) );
                     this.personVorname = '';
                     this.personName = '';
                     this.personMail = '';
@@ -117,7 +120,8 @@
                 let url = this.$store.state.url;
                 axios
                     .post(url + '/api/new_items.php', postObj)
-                    .then(response => console.log(response.data));
+                    .then(response => console.log(response.data))
+                    .catch(self.$store.commit('setServerBug', true) );
                 this.personVorname = '';
                 this.personName = '';
                 this.personMail = '';

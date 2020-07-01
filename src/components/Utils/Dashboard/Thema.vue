@@ -6,6 +6,7 @@
                 v-model="thema"
         ></v-text-field>
         <v-select
+                v-if="abteilungenListe.length > 0"
                 class="spaced"
                 label="Thema einer oder mehreren Abteilungen zuweisen"
                 multiple=""
@@ -16,7 +17,9 @@
         <v-btn v-if="updateThema !== 0" @click="reset()">ZURÜCK</v-btn>
         <br>
 
-        <v-btn class="spaced" @click="showList = ! showList">Themenverzeichnis anzeigen</v-btn>
+        <v-btn class="spaced"
+               v-if="themenListe.length > 0"
+               @click="showList = ! showList">Themenverzeichnis anzeigen</v-btn>
 
         <ItemDatatable
                 v-if="showList"

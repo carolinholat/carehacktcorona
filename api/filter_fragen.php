@@ -6,9 +6,12 @@ header("Access-Control-Allow-Headers: X-Requested-With, Content-Type, Origin, Ca
 header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 require dirname(__DIR__) . '/vendor/autoload.php';
+use Medoo\Medoo;
+require 'base.php';
+$database = new Medoo($base_array_vars);
+
 
 // Using Medoo namespace
-require './base.php';
 
 
 use \Firebase\JWT\JWT;
@@ -28,17 +31,17 @@ EOD;
 //$anzahl_user = $statement->rowCount();
 
 
-function oeffentlich() {
-    $fragen = returnBase()->select('fragen',
+function oeffentlich($dbase) {
+    $fragen = $dbase->select('fragen',
         ['ID', 'frage', 'antwort', 'zeitpunkt_erstellung', 'zeitpunkt_antwort'],
         ['AND' => ['freigegeben_fuer_gast' => 1,
                    'antwort[!]' => null], "ORDER" => ["zeitpunkt_erstellung" => "DESC"]]);
 
     $base = [];
     $base['fragen'] = $fragen;
-    $base['frage_von_abteilung'] = returnBase()->select('frage_von_abteilung', ['frage_ID', 'abteilung_id']);
-    $base['frage_von_thema'] = returnBase()->select('frage_von_thema', ['frage_ID', 'thema_id']);
-    $base['frage_von_kategorie'] = returnBase()->select('frage_von_kategorie', ['frage_ID', 'kategorie_id']);
+    $base['frage_von_abteilung'] = $dbase->select('frage_von_abteilung', ['frage_ID', 'abteilung_id']);
+    $base['frage_von_thema'] = $dbase->select('frage_von_thema', ['frage_ID', 'thema_id']);
+    $base['frage_von_kategorie'] = $dbase->select('frage_von_kategorie', ['frage_ID', 'kategorie_id']);
 
     echo json_encode($base);
 }
@@ -47,7 +50,7 @@ $jwt = file_get_contents('php://input');
 
 // wenn GET, dann gebe nur öffentlich zugängliche Fragen zurück
 if(!$jwt || $jwt === '') {
-    oeffentlich();
+    oeffentlich($database);
 }
 
 // Alles freigegebene für user anzeigen
@@ -59,21 +62,21 @@ else {
         $decoded_array = (array) $decoded;
         $user_abteilung = $decoded_array['abteilung_id'];
 
-        $kategorien_map = returnBase()->select('kategorie_hat_abteilung', ['kategorie_id'], ['abteilung_id' => $user_abteilung]);
+        $kategorien_map = $database->select('kategorie_hat_abteilung', ['kategorie_id'], ['abteilung_id' => $user_abteilung]);
         $kategorien = array_column($kategorien_map, 'kategorie_id');
 
         $abgefragt = ['ID', 'frage', 'antwort', 'zeitpunkt_erstellung', 'zeitpunkt_antwort'];
 
-        $fragen_1 = returnBase()->select('fragen', $abgefragt, ['AND' =>
+        $fragen_1 = $database->select('fragen', $abgefragt, ['AND' =>
                                                                    ['freigegeben_fuer_abteilung' => null,
                                                                     'freigegeben_fuer_kategorie' => null]]);
-        $fragen_2 = returnBase()->select('fragen', $abgefragt, ['AND' =>
+        $fragen_2 = $database->select('fragen', $abgefragt, ['AND' =>
                                                                    ['freigegeben_fuer_abteilung' => $user_abteilung,
                                                                     'freigegeben_fuer_kategorie' => null]]);
-        $fragen_3 = returnBase()->select('fragen',$abgefragt, ['AND' =>
+        $fragen_3 = $database->select('fragen',$abgefragt, ['AND' =>
                                                                    ['freigegeben_fuer_abteilung' => null,
                                                                     'freigegeben_fuer_kategorie' => $kategorien]]);
-        $fragen_4 = returnBase()->select('fragen', $abgefragt, ['AND' =>
+        $fragen_4 = $database->select('fragen', $abgefragt, ['AND' =>
                                                                    ['freigegeben_fuer_abteilung' => $user_abteilung,
                                                                     'freigegeben_fuer_kategorie' => $kategorien]]);
 
@@ -81,13 +84,13 @@ else {
 
         $base = [];
         $base['fragen'] = $fragen;
-        $base['frage_von_abteilung'] = returnBase()->select('frage_von_abteilung', ['frage_ID', 'abteilung_id']);
-        $base['frage_von_kategorie'] = returnBase()->select('frage_von_kategorie', ['frage_ID', 'kategorie_id']);
-        $base['frage_von_thema'] = returnBase()->select('frage_von_thema', ['frage_ID', 'thema_id']);
+        $base['frage_von_abteilung'] = $database->select('frage_von_abteilung', ['frage_ID', 'abteilung_id']);
+        $base['frage_von_kategorie'] = $database->select('frage_von_kategorie', ['frage_ID', 'kategorie_id']);
+        $base['frage_von_thema'] = $database->select('frage_von_thema', ['frage_ID', 'thema_id']);
 
         echo json_encode($base);
     }
     catch(Exception $e) {
-        oeffentlich();
+        oeffentlich($database);
     }
 }

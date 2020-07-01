@@ -7,7 +7,10 @@ header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-require './base.php';
+use Medoo\Medoo;
+
+require 'base.php';
+$database = new Medoo($base_array_vars);
 
 use \Firebase\JWT\JWT;
 
@@ -31,16 +34,68 @@ $input_typ = $data->action;
 if($input_typ === 'getProfil') {
     if($data->token !== '') {
         $jwt = $data->token;
+
+        $auth = true;
+
+        // check, ob der auth-key noch aktuell ist (über uuid)
+        if($data->id) {
+            $datefuenfagedavor = mktime(0, 0, 0, date("m"), date("d") - 5, date("Y"));
+            $fuenftagedavor = date('Y-m-d H:i:s', $datefuenfagedavor);
+
+            $timestamp = $database->select('auth_keys', ['zeitstempel'],
+                [
+                    "AND" => [
+                        'key' => $data->id,
+                        'zeitstempel[>]' => $fuenftagedavor,
+                    ],
+                ]);
+            if(count($timestamp) < 1) {
+                $auth = false;
+                echo '405';
+            } else {
+                try {
+                    $decoded = JWT::decode($jwt, $publicKey, ['RS256']);
+
+                    $decoded_array = (array)$decoded;
+                    $id = (int)$decoded_array['ID'];
+                    $user = $database->select('user', [
+                        'mail', 'name', 'vorname', 'mail_privat', 'handy', 'telegram',
+                    ], ['ID' => $id])[0];
+                    $base['user'] = $user;
+                    echo json_encode($base);
+
+                } catch(Exception $e) {
+                    echo '405';
+                }
+            }
+        }
+
+    } else {
+        echo '405';
+    }
+} else if($input_typ === 'abonnieren') {
+    if($data->token !== '') {
+        $jwt = $data->token;
         try {
             $decoded = JWT::decode($jwt, $publicKey, ['RS256']);
 
             $decoded_array = (array)$decoded;
             $id = (int)$decoded_array['ID'];
-            $user = returnBase()->select('user', [
+            $user = $database->select('user', [
                 'mail', 'name', 'vorname', 'mail_privat', 'handy',
             ], ['ID' => $id])[0];
-            $base['user'] = $user;
-            echo json_encode($base);
+            $abo_flex = $database->select('user', ['abo_flex'], ['ID' => $id])[0]['abo_flex'];
+            $abo_flex_neu = '';
+            if($abo_flex && $abo_flex !== '') {
+                $abo_flex_neu = $abo_flex . ',' . $data->id;
+                $abo_flex_array = explode(',', $abo_flex_neu);
+            } else {
+                $abo_flex_neu = $data->id;
+                $abo_flex_array = [$data->id];
+            }
+            $database->update('user', ['abo_flex' => $abo_flex_neu], ['ID' => $id]);
+
+            echo json_encode($abo_flex_array);
 
         } catch(Exception $e) {
             echo '405';
@@ -48,65 +103,28 @@ if($input_typ === 'getProfil') {
     } else {
         echo '405';
     }
-}
-
-else if($input_typ === 'abonnieren') {
-    if ($data->token !== '') {
+} else if($input_typ === 'desabonnieren') {
+    if($data->token !== '') {
         $jwt = $data->token;
         try {
             $decoded = JWT::decode($jwt, $publicKey, ['RS256']);
 
             $decoded_array = (array)$decoded;
             $id = (int)$decoded_array['ID'];
-            $user = returnBase()->select('user', [
+            $user = $database->select('user', [
                 'mail', 'name', 'vorname', 'mail_privat', 'handy',
             ], ['ID' => $id])[0];
-            $abo_flex = returnBase()->select('user', ['abo_flex'], ['ID' => $id])[0]['abo_flex'];
-            $abo_flex_neu = '';
-            if ($abo_flex && $abo_flex !== '') {
-                $abo_flex_neu = $abo_flex . ',' . $data->id;
-                $abo_flex_array = explode(',', $abo_flex_neu);
-            }
-            else {
-                $abo_flex_neu = $data->id;
-                $abo_flex_array = [$data->id];
-            }
-            returnBase()->update('user', ['abo_flex' => $abo_flex_neu], ['ID' => $id] );
-
-            echo json_encode($abo_flex_array);
-
-        } catch(Exception $e) {
-            echo '405';
-        }
-    }
-    else {
-        echo '405';
-    }
-}
-
-else if($input_typ === 'desabonnieren') {
-    if ($data->token !== '') {
-        $jwt = $data->token;
-        try {
-            $decoded = JWT::decode($jwt, $publicKey, ['RS256']);
-
-            $decoded_array = (array)$decoded;
-            $id = (int)$decoded_array['ID'];
-            $user = returnBase()->select('user', [
-                'mail', 'name', 'vorname', 'mail_privat', 'handy',
-            ], ['ID' => $id])[0];
-            $abo_flex = returnBase()->select('user', ['abo_flex'], ['ID' => $id])[0]['abo_flex'];
-            $abo_flex_array = array_diff( explode(",", $abo_flex), [$data->id] );
+            $abo_flex = $database->select('user', ['abo_flex'], ['ID' => $id])[0]['abo_flex'];
+            $abo_flex_array = array_diff(explode(",", $abo_flex), [$data->id]);
             $abo_flex_neu = implode(",", $abo_flex_array);
-            returnBase()->update('user', ['abo_flex' => $abo_flex_neu], ['ID' => $id] );
+            $database->update('user', ['abo_flex' => $abo_flex_neu], ['ID' => $id]);
 
             echo json_encode($abo_flex_array);
 
         } catch(Exception $e) {
             echo '405';
         }
-    }
-    else {
+    } else {
         echo '405';
     }
 }

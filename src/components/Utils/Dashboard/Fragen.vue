@@ -110,6 +110,11 @@
             }
         },
        methods: {
+           handleErrors(error) {
+               if (error /*.response.status < 200 || error.response.status > 299 */ ) {
+                   this.$store.commit('setServerBug', true);
+               }
+           },
             saveFrage() {
                 let postObj = {};
                 postObj.action = 'frageUpdate';
@@ -133,7 +138,8 @@
                     let url = this.$store.state.url;
                     axios
                         .post(url + '/api/new_items.php', postObj)
-                        .then(response => self.reload());
+                        .then(response => self.reload())
+                        .catch(error => self.handleErrors(error));
                 }
             },
             reload() {

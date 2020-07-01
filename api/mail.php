@@ -4,44 +4,70 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
+use TelegramBot\Api\BotApi;
 
 // Load Composer's autoloader
 require dirname(__DIR__) . '/vendor/autoload.php';
+require './mail_credentials.php';
+use Medoo\Medoo;
+require 'base.php';
+$database = new Medoo($base_array_vars);
+$credentials = $mail_credentials;
+$bot = new TelegramBot\Api\BotApi('1250940848:AAE6V8nD8PNsd38ngWGrr20kV2XnBDUAAWY');
+
+$question = $database->select('fragen', ['ID', 'frage', 'antwort', 'wichtigkeit'], ["ORDER" => ["zeitpunkt_antwort" => "DESC"]])[0];
+
+$empfaenger = returnMessageReceivers($question['ID'], $database);
+
+function sendMailMessage($userArray, $credentials, $question) {
 
 // Instantiation and passing `true` enables exceptions
-$mail = new PHPMailer(true);
+    $mail = new PHPMailer(true);
 
-try {
-    //Server settings
-    $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      // Enable verbose debug output
-    $mail->isSMTP();                                            // Send using SMTP
-    $mail->Host       = 'smtp1.example.com';                    // Set the SMTP server to send through
-    $mail->SMTPAuth   = true;                                   // Enable SMTP authentication
-    $mail->Username   = 'user@example.com';                     // SMTP username
-    $mail->Password   = 'secret';                               // SMTP password
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;         // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` encouraged
-    $mail->Port       = 587;                                    // TCP port to connect to, use 465 for `PHPMailer::ENCRYPTION_SMTPS` above
+    try {
+        //Server settings
+        $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      // Enable verbose debug output
+        $mail->isSMTP();                                            // Send using SMTP
+        $mail->Host       = $credentials['host'];                    // Set the SMTP server to send through
+        $mail->SMTPAuth   = true;                                   // Enable SMTP authentication
+        $mail->Username   = $credentials['nutzername'];                     // SMTP username
+        $mail->Password   = $credentials['passwort'];                                // SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;         // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` encouraged
+        $mail->Port       = $credentials['port'];                                    // TCP port to connect to, use 465 for `PHPMailer::ENCRYPTION_SMTPS` above
 
-    //Recipients
-    $mail->setFrom('from@example.com', 'Mailer');
-    $mail->addAddress('joe@example.net', 'Joe User');     // Add a recipient
-    $mail->addAddress('ellen@example.com');               // Name is optional
-    $mail->addReplyTo('info@example.com', 'Information');
-    $mail->addCC('cc@example.com');
-    $mail->addBCC('bcc@example.com');
+        //Recipients
+        $mail->setFrom($credentials['eigene_adresse'], $credentials['eigener_name']);
+        foreach ($userArray as $userMail) {
+            $mail->addAddress($userMail['mail']);               // Name is optional
+        }
+        $mail->addReplyTo($credentials['eigene_adresse'], $credentials['eigener_name']);
+        //$mail->addCC('cc@example.com');
+        // $mail->addBCC('bcc@example.com');
 
-    // Attachments
-    $mail->addAttachment('/var/tmp/file.tar.gz');         // Add attachments
-    $mail->addAttachment('/tmp/image.jpg', 'new.jpg');    // Optional name
+        // Attachments
+        // $mail->addAttachment('/var/tmp/file.tar.gz');         // Add attachments
+        // $mail->addAttachment('/tmp/image.jpg', 'new.jpg');    // Optional name
 
-    // Content
-    $mail->isHTML(true);                                  // Set email format to HTML
-    $mail->Subject = 'Here is the subject';
-    $mail->Body    = 'This is the HTML message body <b>in bold!</b>';
-    $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+        // Content
+        $mail->isHTML(true);                                  // Set email format to HTML
+        $mail->Subject = $question['frage'];
+        $mail->Body    = '<h2>' . $question['frage'] . '</h2><br>' . $question['antwort'];
+        $mail->AltBody = $question['frage'] . ' --> ' . $question['antwort'];
 
-    $mail->send();
-    echo 'Message has been sent';
-} catch (Exception $e) {
-    echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+        $mail->send();
+        echo 'Message has been sent';
+    } catch (Exception $e) {
+        echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+    }
 }
+
+if ($question['wichtigkeit'] === 'mail') {
+    sendMailMessage($empfaenger, $credentials, $question);
+}
+
+if ($question['wichtigkeit'] === 'bot') {
+    foreach($empfaenger as $user) {
+        $bot->sendMessage($user['telegram'], $question['frage'] . ' --> ' . $question['antwort']);
+    }
+}
+

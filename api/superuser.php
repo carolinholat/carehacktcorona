@@ -7,7 +7,9 @@ header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-require './base.php';
+use Medoo\Medoo;
+require 'base.php';
+$database = new Medoo($base_array_vars);
 
 use \Firebase\JWT\JWT;
 
@@ -28,21 +30,21 @@ $decoded_array = (array)$decoded;
 $role = $decoded_array['role'];
 if($role === 'admin') {
     $base = [];
-    $user = returnBase()->select("user", ['ID', 'mail', 'name', 'vorname', 'abteilung_id']);
+    $user = $database->select("user", ['ID', 'mail', 'name', 'vorname', 'abteilung_id']);
 
-    $beitraege = returnBase()->select("fragen", [
+    $beitraege = $database->select("fragen", [
         'ID', 'frage', 'antwort',
         'zeitpunkt_erstellung', 'freigegeben_fuer_abteilung', 'freigegeben_fuer_kategorie', 'freigegeben_fuer_gast', 'forum_thread', 'wichtigkeit',
     ]);
 
-    $fragen_zu_beantworten = returnBase()->select("fragen", [
+    $fragen_zu_beantworten = $database->select("fragen", [
         'ID', 'frage', 'antwort',
         'zeitpunkt_erstellung', 'freigegeben_fuer_abteilung', 'freigegeben_fuer_kategorie', 'freigegeben_fuer_gast', 'forum_thread',
     ], ["antwort" => null]);
 
-    $frage_von_abteilung = returnBase()->select("frage_von_abteilung", ['frage_ID', 'abteilung_id']);
-    $frage_von_kategorie = returnBase()->select("frage_von_kategorie", ['frage_ID', 'kategorie_id']);
-    $frage_von_thema = returnBase()->select("frage_von_thema", ['frage_ID', 'thema_id']);
+    $frage_von_abteilung = $database->select("frage_von_abteilung", ['frage_ID', 'abteilung_id']);
+    $frage_von_kategorie = $database->select("frage_von_kategorie", ['frage_ID', 'kategorie_id']);
+    $frage_von_thema = $database->select("frage_von_thema", ['frage_ID', 'thema_id']);
 
     $base['user'] = $user;
     $base['beitraege'] = $beitraege;

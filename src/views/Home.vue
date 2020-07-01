@@ -43,27 +43,31 @@
                         </div>
                     </v-card>
                 </v-col>
+                <WarningServerBug v-if="$store.state.serverBug"/>
             </v-row>
-
 </template>
 
 <script>
     import axios from "../plugins/axios";
     import NewsTicker from './../components/Utils/NewsTicker';
+    import WarningServerBug from '../../src/components/layout/WarningServerBug'
 
     export default {
         components: {
-            NewsTicker
+            NewsTicker,
+            WarningServerBug
         },
         mounted() {
             let self = this;
             axios
                 .get('http://localhost:8000/api/filter_fragen.php')
-                .then(response => self.initFrageFilter(response.data));
+                .then(response => self.initFrageFilter(response.data))
+                .catch(self.$store.commit('setServerBug', true) );
 
             axios
                 .post('http://localhost:8000/api/init.php', 'themenundabteilungen')
-                .then(response => self.initThemenUndAbteilungen(response.data));
+                .then(response => self.initThemenUndAbteilungen(response.data))
+                .catch(self.$store.commit('setServerBug', true) );
         },
         methods: {
             initFrageFilter(responseData) {

@@ -80,7 +80,7 @@
                 abteilungId: 0,
                 kategorieId: 0,
                 select: 'Abteilung',
-            /* search: '', */
+                /* search: '', */
                 headers: [{text: 'Bezeichnung', value: 'text'}, {text: 'Bearbeiten', value: 'link'}, {
                     text: 'Löschen',
                     value: 'delete'
@@ -91,6 +91,11 @@
             }
         },
         methods: {
+            handleErrors(error) {
+                if(error /*.response.status < 200 || error.response.status > 299 */) {
+                    this.$store.commit('setServerBug', true);
+                }
+            },
             reset() {
                 this.updateId = 0;
                 this.newItem = '';
@@ -111,21 +116,20 @@
                 let zugewiesenMapArray = [];
                 let zugewiesen = [];
 
-                if (this.select === 'Abteilung') {
+                if(this.select === 'Abteilung') {
                     zugewiesenMapArray = this.kategorieHatAbteilung.filter((obj) => parseInt(obj.abteilung_id) === item.value);
-                    for (let map of zugewiesenMapArray) {
+                    for(let map of zugewiesenMapArray) {
                         zugewiesen.push(parseInt(map.kategorie_id));
                     }
-                }
-                else if (this.select === 'Kategorie') {
+                } else if(this.select === 'Kategorie') {
                     zugewiesenMapArray = this.kategorieHatAbteilung.filter((obj) => parseInt(obj.kategorie_id) === item.value);
-                    for (let map of zugewiesenMapArray) {
+                    for(let map of zugewiesenMapArray) {
                         zugewiesen.push(parseInt(map.abteilung_id));
                     }
                 }
 
-                for (let abteilungBzwKategorie of list) {
-                    if (zugewiesen.includes(abteilungBzwKategorie.value)) {
+                for(let abteilungBzwKategorie of list) {
+                    if(zugewiesen.includes(abteilungBzwKategorie.value)) {
                         this.newItemChildren.push(abteilungBzwKategorie);
                     }
                 }
@@ -134,49 +138,63 @@
                 this.filteredItems = e;
             },
             deleteItem(id) {
-                this.updateId = id;
+                let postObj = {};
+                postObj.ID = id;
+                if(this.select === 'Abteilung') {
+                    postObj.action = 'abteilungDelete';
+                } else if(this.select === 'Kategorie') {
+                    postObj.action = 'kategorieDelete';
+                }
+                let self = this;
+                let url = this.$store.state.url;
+                axios
+                    .post(url + '/api/new_items.php', postObj)
+                    .then()
+                    .catch(error => self.handleErrors(error));
                 this.$emit('loadNew');
                 this.overlayDelete = false;
-                // TODO: POST
             },
             tryDeleteItem(id) {
                 this.updateId = id;
                 this.overlayDelete = true;
             },
             save() {
-                if (this.newItem === '' || this.newItemChildren.length < 1) {
+                if(this.newItem === '' || this.newItemChildren.length < 1) {
                     this.overlay = true;
-                }
-                else {
+                } else {
                     let postObj = {};
-                    if (this.updateId === 0) {
-                        if (this.select === 'Abteilung') {
+                    if(this.updateId === 0) {
+                        if(this.select === 'Abteilung') {
                             postObj.action = 'abteilungInsert';
                             postObj.abteilung = this.newItem;
                             postObj.kategorien = this.newItemChildren;
-                        }
-                        else if (this.select === 'Kategorie') {
+                        } else if(this.select === 'Kategorie') {
                             postObj.action = 'kategorieInsert';
                             postObj.kategorie = this.newItem;
                             postObj.abteilungen = this.newItemChildren;
                         }
-                    }
-                    else {
+                    } else {
                         postObj.ID = this.updateId;
-                        if (this.select === 'Abteilung') {
+                        if(this.select === 'Abteilung') {
                             postObj.action = 'abteilungUpdate';
                             postObj.abteilung = this.newItem;
                             postObj.kategorien = this.newItemChildren;
-                        }
-                        else if (this.select === 'Kategorie') {
+                        } else if(this.select === 'Kategorie') {
                             postObj.action = 'kategorieUpdate';
                             postObj.kategorie = this.newItem;
                             postObj.abteilungen = this.newItemChildren;
                         }
                     }
+                    let self = this;
+                    let url = this.$store.state.url;
+
+                    axios
+                        .post(url + '/api/new_items.php', postObj)
+                        .then(self.$emit('loadNew'))
+                        .catch(error => self.handleErrors(error));
                 }
-                this.$emit('loadNew');
                 this.reset();
+               // this.$emit('loadNew');
             }
         }
     }

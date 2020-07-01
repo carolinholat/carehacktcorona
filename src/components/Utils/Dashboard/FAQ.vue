@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="abteilungenListe.length > 0 && kategorienListe.length > 0">
         <v-text-field
                 label="Frage"
                 placeholder="Ihr Fragetext"
@@ -15,21 +15,21 @@
                     v-model="ampel"
                     label="Als Push-Notification senden"
                     color="red"
-                    value="rot"
+                    value="bot"
                     hide-details
             ></v-checkbox>
             <v-checkbox
                     v-model="ampel"
                     label="Als Email senden"
                     color="yellow"
-                    value="gelb"
+                    value="mail"
                     hide-details
             ></v-checkbox>
             <v-checkbox
                     v-model="ampel"
                     label="Nur zuweisen"
                     color="green"
-                    value="gruen"
+                    value=""
                     hide-details
             ></v-checkbox>
         </div>
@@ -69,7 +69,9 @@
         <v-switch class="spaced" v-model="frageOeffentlich" label="Öffentlich sichtbar?"></v-switch>
 
         <v-btn @click="saveFAQ()">SPEICHERN</v-btn><br>
-        <v-btn class="spaced" @click="showList = ! showList">Beiträge anzeigen</v-btn>
+        <v-btn class="spaced"
+               v-if="beitraege.length > 0"
+               @click="showList = ! showList">Beiträge anzeigen</v-btn>
         <ItemDatatable
                 v-if="showList"
                 :headers="headers"
@@ -83,13 +85,14 @@
        <!-- <WarningDelete/> -->
 
     </div>
+    <div v-else>Füllen Sie zuerst das Organigramm aus, bevor Sie Beiträge erstellen</div>
 
 </template>
 
 <script>
     import axios from "../../../plugins/axios";
     import WarningOverlay from "../../layout/WarningOverlay"
-    import WarningDelete from "../../layout/WarningDelete"
+   /* import WarningDelete from "../../layout/WarningDelete" */
     import ItemDatatable from '../ItemDatatable';
 
 
@@ -107,7 +110,7 @@
         },
         components: {
             WarningOverlay,
-            WarningDelete,
+            /*WarningDelete, */
             ItemDatatable
         },
         data() {
@@ -128,6 +131,11 @@
             }
         },
         methods: {
+            handleErrors(error) {
+                if (error /*.response.status < 200 || error.response.status > 299 */ ) {
+                    this.$store.commit('setServerBug', true);
+                }
+            },
             showUpdateBeitrag(id){
                 this.beitragId = id;
                 let chosenBeitrag = this.beitraege.filter((user) => user.ID === id)[0];
@@ -141,14 +149,14 @@
                 }
                 this.abteilungFreigeben = chosenBeitrag.freigegeben_fuer_abteilung;
                 this.kategorieFreigeben = chosenBeitrag.freigegeben_fuer_kategorie;
-                if (chosenBeitrag.wichtigkeit === 'normal') {
-                    this.ampel = 'gruen';
+                if (chosenBeitrag.wichtigkeit === '') {
+                    this.ampel = '';
                 }
-                else if (chosenBeitrag.wichtigkeit === 'wichtig') {
-                    this.ampel = 'gelb';
+                else if (chosenBeitrag.wichtigkeit === 'mail') {
+                    this.ampel = 'mail';
                 }
-                else if (chosenBeitrag.wichtigkeit === 'sehr wichtig') {
-                    this.ampel = 'rot';
+                else if (chosenBeitrag.wichtigkeit === 'bot') {
+                    this.ampel = 'bot';
                 }
 
                 // zugeordnete abteilungen, themen, kategorien filtern
@@ -199,6 +207,7 @@
                 postObj.themen = this.frageThemen;
                 postObj.freigeben_abteilung = this.abteilungFreigeben;
                 postObj.freigeben_kategorie = this.kategorieFreigeben;
+                postObj.wichtigkeit = this.ampel;
                 let oeffentlich = 0;
                 if (this.frageOeffentlich) {
                     oeffentlich = 1;
@@ -212,7 +221,8 @@
                     let url = this.$store.state.url;
                     axios
                         .post(url + '/api/new_items.php', postObj)
-                        .then(response => self.reload());
+                        .then(response => self.reload())
+                        .catch(error => self.handleErrors(error));
                 }
 
             },

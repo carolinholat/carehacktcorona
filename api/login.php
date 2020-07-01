@@ -7,7 +7,9 @@ header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-require './base.php';
+use Medoo\Medoo;
+require 'base.php';
+$database = new Medoo($base_array_vars);
 
 use \Firebase\JWT\JWT;
 $privateKey = <<<EOD
@@ -35,7 +37,7 @@ $data = json_decode($json);
 $mail = $data->mail;
 $pw = $data->pw;
 
-$auth = returnBase()->get('user', ['ID', 'role', 'abteilung_id', 'abo_pflicht', 'abo_flex', 'pw'], ["mail" => $mail]);
+$auth = $database->get('user', ['ID', 'role', 'abteilung_id', 'abo_pflicht', 'abo_flex', 'pw'], ["mail" => $mail]);
 
 if (count($auth) > 0 && password_verify($pw, $auth['pw'])) {
     $role = $auth['role'];
@@ -55,7 +57,7 @@ if (count($auth) > 0 && password_verify($pw, $auth['pw'])) {
     $base['token'] = $jwt;
     $base['role'] = $role;
     $base['abteilung'] = $abteilung;
-    $kategorien_array = returnBase()->select('kategorie_hat_abteilung', ['kategorie_id'], ['abteilung_id' => $abteilung]);
+    $kategorien_array = $database->select('kategorie_hat_abteilung', ['kategorie_id'], ['abteilung_id' => $abteilung]);
     $kategorien_as_string = array_column($kategorien_array, 'kategorie_id');
     $kategorien =[];
     foreach($kategorien_as_string as $string) {

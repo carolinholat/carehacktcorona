@@ -7,7 +7,7 @@
                 <h3>Geschäftsbereiche</h3>
 
                 <v-switch
-                        v-if="$store.state.token !== ''"
+                        v-if="$store.state.token !== '' && abteilungenListe.length > 0 && kategorienListe.length > 0 && themenListe.length > 0"
                         @change="modifyFilterPersonalisiert()"
                         v-model="filterPersonalisiert" label="Personalisierten Filter anwenden"></v-switch>
 
@@ -49,7 +49,7 @@
             <div class="sidebar">
                 <h2 align="center" class="spaced">Übersicht Forums-Threads</h2>
                 <p style="height: 30px"></p>
-                <div>
+                <div v-if="(nurAktive && fragenResFilterAktiv.length > 0) || (!nurAktive && fragenResFilterAlle.length > 0)">
                     <v-data-table
                             :headers="threadHeaders"
                             :items="nurAktive ? fragenResFilterAktiv : fragenResFilterAlle"
@@ -71,10 +71,11 @@
                         </template>
                     </v-data-table>
                 </div>
+                <div v-else>{{ nurAktive ? 'Keine offenen Forumsthreads vorhanden' : 'Keine Forumsthreads vorhanden'}}</div>
             </div>
         </v-col>
         <v-col cols="12" lg="3" style=""
-               :class="{'blue': $vuetify.breakpoint.smAndDown}">
+               :class="blue">
 
             <v-card class="sidebar" style="min-height: 50px">
                 <div class="cardContent">
@@ -87,34 +88,45 @@
                 </div>
             </v-card>
         </v-col>
+        <WarningServerBug v-if="$store.state.serverBug"/>
     </v-row>
-
 </template>
 
 <script>
     import axios from "../plugins/axios";
     import NewsTicker from './../components/Utils/NewsTicker';
+    import WarningServerBug from '../../src/components/layout/WarningServerBug'
+
 
     export default {
         components: {
-            NewsTicker
+            NewsTicker,
+            WarningServerBug
         },
         mounted() {
             let self = this;
             let url = this.$store.state.url;
             axios
                 .post(url + '/api/filter_fragen.php', this.$store.state.token)
-                .then(response => self.initFragen(response.data));
+                .then(response => self.initFragen(response.data))
+                .catch(error => self.handleErrors(error));
 
             axios
                 .post(url + '/api/init.php', 'themenundabteilungen')
-                .then(response => self.initThemenUndAbteilungen(response.data));
+                .then(response => self.initThemenUndAbteilungen(response.data))
+                .catch(error => self.handleErrors(error));
 
             axios
                 .post(url + '/api/filter_forum.php', this.$store.state.token)
-                .then(response => self.initForum(response.data));
+                .then(response => self.initForum(response.data))
+                .catch(error => self.handleErrors(error));
         },
         methods: {
+            handleErrors(error) {
+                if (error /*.response.status < 200 || error.response.status > 299 */ ) {
+                    this.$store.commit('setServerBug', true);
+                }
+            },
             jumpToMeldung(id) {
                 this.$router.push({ path: '/infos?id=' + id });
             },
@@ -134,9 +146,17 @@
             },
 
             initThemenUndAbteilungen(data) {
-                this.themenListe = this.listObjectToArray(data.themen, 'themen');
-                this.abteilungenListe = this.listObjectToArray(data.abteilungen, 'abteilungen');
-                this.kategorienListe = this.listObjectToArray(data.kategorien, 'kategorien');
+                try {
+                    this.themenListe = this.listObjectToArray(data.themen, 'themen');
+                    this.abteilungenListe = this.listObjectToArray(data.abteilungen, 'abteilungen');
+                    this.kategorienListe = this.listObjectToArray(data.kategorien, 'kategorien');
+                } catch(Exception) {
+                    // wenn die datenbank leer ist
+                    this.themenListe = [];
+                    this.abteilungenListe = [];
+                    this.kategorienListe = [];
+                }
+
             },
 
             filteredFragen() {

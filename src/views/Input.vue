@@ -14,8 +14,8 @@
                     <br>
                     <v-btn color="primary" class="infoBtn" @click="status='Thema'">Thema erstellen</v-btn>
                     <br>
-                   <!-- <v-btn color="primary" class="infoBtn" @click="status='Lesestatistiken'">Lesestatistiken</v-btn>
-                    <br> -->
+                    <!-- <v-btn color="primary" class="infoBtn" @click="status='Lesestatistiken'">Lesestatistiken</v-btn>
+                     <br> -->
                     <v-btn color="primary" class="infoBtn" @click="status='Organigramm'">Organigramm verwalten</v-btn>
                     <br>
                     <v-btn color="primary" class="infoBtn" @click="status='Mitarbeiter'">Mitarbeiter</v-btn>
@@ -75,23 +75,21 @@
                 </v-row>
             </div>
         </v-col>
+        <WarningServerBug v-if="$store.state.serverBug"/>
     </v-row>
-
 </template>
 
 <script>
     import axios from "../plugins/axios";
-    import Beitraege from "./../components/Utils/Dashboard/Beitraege";
     import FAQ from "./../components/Utils/Dashboard/FAQ";
     import Fragen from "./../components/Utils/Dashboard/Fragen";
-    import Lesestatistiken from "./../components/Utils/Dashboard/Lesestatistiken";
     import Mitarbeiter from "./../components/Utils/Dashboard/Mitarbeiter";
     import Organigramm from "./../components/Utils/Dashboard/Organigramm";
     import Thema from "./../components/Utils/Dashboard/Thema";
-
+    import WarningServerBug from '../../src/components/layout/WarningServerBug'
 
     export default {
-        components: {Mitarbeiter, FAQ, Fragen, Beitraege, Lesestatistiken, Organigramm, Thema},
+        components: {Mitarbeiter, FAQ, Fragen, Organigramm, Thema, WarningServerBug},
         data() {
             return {
                 status: 'FAQ',
@@ -115,6 +113,11 @@
             this.setThemenUndAbteilungen();
         },
         methods: {
+            handleErrors(error) {
+                if (error /*.response.status < 200 || error.response.status > 299 */ ) {
+                    this.$store.commit('setServerBug', true);
+                }
+            },
             //Axios
             setUser() {
                 let self = this;
@@ -122,14 +125,16 @@
                 let url = this.$store.state.url;
                 axios
                     .post(url + '/api/superuser.php', login)
-                    .then(response => self.initFragenUndUser(response.data));
+                    .then(response => self.initFragenUndUser(response.data))
+                    .catch(error => self.handleErrors(error));
             },
             setThemenUndAbteilungen() {
                 let self = this;
                 let url = this.$store.state.url;
                 axios
                     .post(url + '/api/init.php', 'themenundabteilungen')
-                    .then(response => self.initThemenUndAbteilungen(response.data));
+                    .then(response => self.initThemenUndAbteilungen(response.data))
+                    .catch(error => self.handleErrors(error));
             },
             // Set DATA
             initThemenUndAbteilungen(data) {
@@ -138,6 +143,7 @@
                 this.kategorienListe = data.kategorien;
                 this.themaVonAbteilung = data.thema_von_abteilung;
                 this.kategorieHatAbteilung = data.kategorie_hat_abteilung;
+
             },
             initFragenUndUser(data) {
                 this.user = data.user;
@@ -150,44 +156,20 @@
 
             listObjectToArray(obj) {
                 let array = [];
-                let objectValues = Object.values(obj);
-                for(let obj of objectValues) {
-                    let item = {};
-                    item.value = objectValues.indexOf(obj) + 1;
-                    item.text = obj.name;
-                    array.push(item);
+                try {
+                    let objectValues = Object.values(obj);
+                    for(let obj of objectValues) {
+                        let item = {};
+                        item.value = objectValues.indexOf(obj) + 1;
+                        item.text = obj.name;
+                        array.push(item);
+                    }
+                    return array;
+                } catch(Exception) {
+                    return [];
                 }
-                return array;
-            }
 
-            /*save() {
-                let postObj = {};
-                postObj.typ = this.chosenItemKategorie.toLowerCase();
-                if(this.chosenItemKategorie === 'Frage') {
-                    postObj.frage = this.frageText;
-                    postObj.antwort = this.antwortText;
-                } else if(this.chosenItemKategorie === 'Abteilung') {
-                    postObj.abteilung = this.abteilung;
-                } else if(this.chosenItemKategorie === 'Thema') {
-                    postObj.thema = this.thema;
-                } else {
-                    postObj.name = this.personName;
-                    postObj.mail = this.personMail;
-                    postObj.abteilung = this.personAbteilung;
-                }
-                this.chosenItemKategorie = '';
-                this.frageText = '';
-                this.antwortText = '';
-                this.abteilung = '';
-                this.thema = '';
-                this.personName = '';
-                this.personMail = '';
-                this.personAbteilung = '';
-                console.log(this.thema + 'TEST');
-                axios
-                    .post('http://localhost:8000/carehacktcorona/api/new_items.php', postObj)
-                    .then(response => console.log(response.data));
-            } */
+            }
         }
     };
 </script>

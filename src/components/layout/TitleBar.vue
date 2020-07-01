@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-toolbar style="height: 100px;"  :color="checkLogin">
+        <v-toolbar style="height: 100px;" :color="checkLogin">
             <!--#ADD8E6  #1E90FF-->
             <!--<div class="flex-grow-1"></div>
 
@@ -87,6 +87,10 @@
             </v-menu>
             <v-spacer></v-spacer>
             <v-btn style="margin: 20px"
+                   color="primary" @click="inputFrage = true">
+                <router-link to="/infos" class="routerLink">Neue Frage stellen</router-link>
+            </v-btn>
+            <v-btn style="margin: 20px"
                    color="primary">
                 <router-link to="/forum" class="routerLink">Forum</router-link>
             </v-btn>
@@ -113,23 +117,30 @@
         <Drawer
                 v-model="drawer"
         />
+        <InputFrage
+        v-if="inputFrage"
+        @zurueck="inputFrage = false"/>
     </div>
 </template>
 
 <script>
     import Drawer from './Drawer'
+    import InputFrage from './InputFrage'
+
     export default {
         props: {
             itemsSuche: Array
         },
         components: {
-          Drawer
+            Drawer,
+            InputFrage
         },
         name: "TitleBar",
         data() {
             return {
                 search: '',
-                drawer: null
+                drawer: null,
+                inputFrage: false
             }
         },
         methods: {
@@ -152,10 +163,9 @@
         },
         computed: {
             checkLogin() {
-                if (this.$store.state.token === '') {
+                if(this.$store.state.token === '') {
                     return '#87ceeb';
-                }
-                else {
+                } else {
                     return /*'#a5d6a7' */  '#188600';
                 }
             }

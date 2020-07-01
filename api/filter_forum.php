@@ -7,8 +7,9 @@ header("Access-Control-Allow-Methods: PUT, POST, GET, OPTIONS, DELETE");
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-require './base.php';
-
+use Medoo\Medoo;
+require 'base.php';
+$database = new Medoo($base_array_vars);
 
 use \Firebase\JWT\JWT;
 
@@ -29,7 +30,7 @@ $data = file_get_contents('php://input');
 
 // wenn GET, dann gebe nur öffentlich zugängliche Fragen zurück
 if(!$data || $data = '') {
-    forumOeffentlich();
+    forumOeffentlich($database);
     // oeffentlich($db);
 
 } // Alles freigegebene für user anzeigen
@@ -43,26 +44,26 @@ else {
         $role = $decoded_array['role'];
         $abteilung = $decoded_array['abteilung_id'];
 
-        forumAnmeldebereich($abteilung);
+        forumAnmeldebereich($abteilung, $database);
 
     } catch(Exception $e) {
         //  oeffentlich($db);
-        forumOeffentlich();
+        forumOeffentlich($database);
     }
 }
 
-function forumOeffentlich() {
+function forumOeffentlich($database) {
     $lastmonth = mktime(0, 0, 0, date("m") - 1, date("d"), date("Y"));
     $ein_monat_davor = date('Y-m-d H:i:s', $lastmonth);
 
-    $forum_aktiv = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_aktiv = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         [
             'AND' => ['fragen.freigegeben_fuer_gast' => 1, 'forum_threads.zeitstempel[>]' => $ein_monat_davor],
             "ORDER" => ["zeitstempel" => "DESC"],
         ]);
 
-    $forum_alle = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_alle = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         ['fragen.freigegeben_fuer_gast' => 1, "ORDER" => ["zeitstempel" => "DESC"]]);
 
@@ -74,14 +75,14 @@ function forumOeffentlich() {
     echo json_encode($base);
 }
 
-function forumAnmeldebereich($abteilung) {
+function forumAnmeldebereich($abteilung, $database) {
     $lastmonth = mktime(0, 0, 0, date("m") - 1, date("d"), date("Y"));
     $ein_monat_davor = date('Y-m-d H:i:s', $lastmonth);
-    $kategorien_map = returnBase()->select('kategorie_hat_abteilung', ['kategorie_id'], ['abteilung_id' => $abteilung]);
+    $kategorien_map = $database->select('kategorie_hat_abteilung', ['kategorie_id'], ['abteilung_id' => $abteilung]);
     $kategorien = array_column($kategorien_map, 'kategorie_id');
 
     // abteilung_id + kategorie:null
-    $forum_aktiv_1 = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_aktiv_1 = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         [
             'AND' => [
@@ -93,7 +94,7 @@ function forumAnmeldebereich($abteilung) {
         ]);
 
     //abteilung:null + kategorie:null
-    $forum_aktiv_2 = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_aktiv_2 = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         [
             'AND' => [
@@ -105,7 +106,7 @@ function forumAnmeldebereich($abteilung) {
         ]);
 
     //abteilung:id, kategorie:array
-    $forum_aktiv_3 = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_aktiv_3 = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         [
             'AND' => [
@@ -117,7 +118,7 @@ function forumAnmeldebereich($abteilung) {
         ]);
 
     //abteilung:null, kategorie:array
-    $forum_aktiv_4 = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_aktiv_4 = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         [
             'AND' => [
@@ -131,28 +132,28 @@ function forumAnmeldebereich($abteilung) {
 ///////////////////////////////////////////////////////////
 ///
 ///  // abteilung_id + kategorie:null
-    $forum_alle_1 = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_alle_1 = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         ['AND' => ['fragen.freigegeben_fuer_abteilung' => $abteilung,
                    'fragen.freigegeben_fuer_kategorie' => null],
          "ORDER" => ["zeitstempel" => "DESC"]]);
 
     //abteilung:null + kategorie:null
-    $forum_alle_2 = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_alle_2 = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         ['AND' => ['fragen.freigegeben_fuer_abteilung' => null,
                    'fragen.freigegeben_fuer_kategorie' => null],
          "ORDER" => ["zeitstempel" => "DESC"]]);
 
     //abteilung:id, kategorie:array
-    $forum_alle_3 = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_alle_3 = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         ['AND' => ['fragen.freigegeben_fuer_abteilung' => $abteilung,
                    'fragen.freigegeben_fuer_kategorie' => $kategorien],
          "ORDER" => ["zeitstempel" => "DESC"]]);
 
     //abteilung:null, kategorie:array
-    $forum_alle_4 = returnBase()->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
+    $forum_alle_4 = $database->select('forum_threads', ["[><]fragen" => ["frage_ID" => "ID"]],
         ['fragen.frage', 'fragen.antwort', 'fragen.ID', 'fragen.zeitpunkt_erstellung', 'fragen.freigegeben_fuer_abteilung', 'fragen.freigegeben_fuer_kategorie', 'fragen.forum_thread', 'fragen.zeitpunkt_antwort'],
         ['AND' => ['fragen.freigegeben_fuer_abteilung' => null,
                    'fragen.freigegeben_fuer_kategorie' => $kategorien],
